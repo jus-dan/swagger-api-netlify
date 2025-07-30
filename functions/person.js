@@ -132,8 +132,8 @@ router.post('/person', async (req, res) => {
   res.status(201).json(data[0]);
 });
 
-app.use('/.netlify/functions/person', router);
-
 router.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.use('/.netlify/functions/person', router);
 
 module.exports.handler = serverless(app);
