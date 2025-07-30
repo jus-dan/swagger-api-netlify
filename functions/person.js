@@ -142,8 +142,8 @@ router.post('/', async (req, res) => {
       body = JSON.parse(body.toString('utf-8'));
     }
 
-    console.log('📥 typeof req.body:', typeof req.body);
-    console.log('📥 Request Body:', req.body); // Wird im Netlify-Log angezeigt
+    console.log('📥 typeof req.body:', typeof body);
+    console.log('📥 Request Body:', body); // Wird im Netlify-Log angezeigt
 
     const { name, email, roles } = req.body;
 
