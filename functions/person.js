@@ -1,5 +1,6 @@
 const express = require('express');
 const serverless = require('serverless-http');
+const bodyParser = require('body-parser');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
@@ -33,7 +34,9 @@ const swaggerSpec = swaggerJsdoc({
 const app = express();
 const router = express.Router();
 
-app.use(express.json());
+app.use(bodyParser.json());       // ✅ ersetzt express.json()
+router.use(bodyParser.json());   // ✅ auch für router absichern
+
 
 // Supabase-Verbindung (ersetze durch deine Werte!)
 const supabase = createClient(
