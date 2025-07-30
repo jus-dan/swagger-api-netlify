@@ -145,6 +145,11 @@ router.post('/', async (req, res) => {
 
 router.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Swagger-Doku zuerst am Haupt-Router einhängen
+app.use('/.netlify/functions/person/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Dann die eigentliche API einhängen
 app.use('/.netlify/functions/person', router);
+
 
 module.exports.handler = serverless(app);
