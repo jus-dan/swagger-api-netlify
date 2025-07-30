@@ -32,7 +32,9 @@ const swaggerSpec = swaggerJsdoc({
 
 const app = express();
 const router = express.Router();
+
 app.use(express.json());
+router.use(express.json()); // wichtig für Netlify Functions
 
 // Supabase-Verbindung (ersetze durch deine Werte!)
 const supabase = createClient(
