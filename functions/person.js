@@ -133,6 +133,17 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   
+
+  try {
+    let body = req.body;
+
+    // Falls req.body ein Buffer ist → manuell parsen
+    if (Buffer.isBuffer(body)) {
+      body = JSON.parse(body.toString('utf-8'));
+    }
+
+
+
   console.log('📥 typeof req.body:', typeof req.body);
   console.log('📥 Request Body:', req.body); // Wird im Netlify-Log angezeigt
 
