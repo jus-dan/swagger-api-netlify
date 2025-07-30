@@ -6,6 +6,8 @@ require('dotenv').config();
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 
+
+
 const swaggerSpec = swaggerJsdoc({
   definition: {
     openapi: '3.0.0',
@@ -14,9 +16,18 @@ const swaggerSpec = swaggerJsdoc({
       version: '1.0.0',
       description: 'API für Personenverwaltung im Makerspace',
     },
+    servers: [
+      {
+        url: 'https://radiant-maamoul-fab9c6.netlify.app/.netlify/functions/person',
+        description: 'Live API auf Netlify',
+      }
+    ]
   },
-  apis: ['./functions/person.js'], // aktuelle Datei
+  apis: ['./functions/person.js'],
 });
+
+
+
 
 
 const app = express();
@@ -41,7 +52,7 @@ const supabase = createClient(
  *         description: Gibt eine Liste von Personen zurück
  */
 
-router.get('/person', async (req, res) => {
+router.get('/', async (req, res) => {
   const { data, error } = await supabase
     .from('person')
     .select('*')
@@ -71,7 +82,7 @@ router.get('/person', async (req, res) => {
  *         description: Nicht gefunden
  */
 
-router.get('/person/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   const { data, error } = await supabase
     .from('person')
     .select('*')
@@ -116,7 +127,7 @@ router.get('/person/:id', async (req, res) => {
  */
 
 
-router.post('/person', async (req, res) => {
+router.post('/', async (req, res) => {
   const { name, email, roles } = req.body;
 
   if (!name || !email || !Array.isArray(roles)) {
