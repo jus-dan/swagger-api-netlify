@@ -3,6 +3,21 @@ const serverless = require('serverless-http');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+
+const swaggerSpec = swaggerJsdoc({
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Makerspace API – Person',
+      version: '1.0.0',
+      description: 'API für Personenverwaltung im Makerspace',
+    },
+  },
+  apis: ['./functions/person.js'], // aktuelle Datei
+});
+
 
 const app = express();
 const router = express.Router();
@@ -13,7 +28,19 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
 );
-// 🔍 GET /person – alle Personen anzeigen
+
+
+
+/**
+ * @swagger
+ * /person:
+ *   get:
+ *     summary: Liste aller Personen
+ *     responses:
+ *       200:
+ *         description: Gibt eine Liste von Personen zurück
+ */
+
 router.get('/person', async (req, res) => {
   const { data, error } = await supabase
     .from('person')
@@ -24,7 +51,26 @@ router.get('/person', async (req, res) => {
   res.json(data);
 });
 
-// 🔍 GET /person/:id – einzelne Person abrufen
+
+/**
+ * @swagger
+ * /person/{id}:
+ *   get:
+ *     summary: Einzelne Person anzeigen
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Die ID der Person
+ *     responses:
+ *       200:
+ *         description: Erfolgreich
+ *       404:
+ *         description: Nicht gefunden
+ */
+
 router.get('/person/:id', async (req, res) => {
   const { data, error } = await supabase
     .from('person')
@@ -36,7 +82,40 @@ router.get('/person/:id', async (req, res) => {
   res.json(data);
 });
 
-// 🆕 POST /person – neue Person anlegen
+
+
+/**
+ * @swagger
+ * /person:
+ *   post:
+ *     summary: Neue Person anlegen
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - roles
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               roles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       201:
+ *         description: Person erfolgreich angelegt
+ *       400:
+ *         description: Fehlerhafte Eingabe
+ */
+
+
 router.post('/person', async (req, res) => {
   const { name, email, roles } = req.body;
 
@@ -54,4 +133,7 @@ router.post('/person', async (req, res) => {
 });
 
 app.use('/.netlify/functions/person', router);
+
+router.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 module.exports.handler = serverless(app);
