@@ -128,6 +128,8 @@ router.get('/:id', async (req, res) => {
 
 
 router.post('/', async (req, res) => {
+  
+  console.log('📥 Request Body:', req.body); // Wird im Netlify-Log angezeigt
   const { name, email, roles } = req.body;
 
   if (!name || !email || !Array.isArray(roles)) {
