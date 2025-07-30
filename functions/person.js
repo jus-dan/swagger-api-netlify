@@ -9,9 +9,10 @@ const router = express.Router();
 app.use(express.json());
 
 // Supabase-Verbindung (ersetze durch deine Werte!)
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-
-
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 // 🔍 GET /person – alle Personen anzeigen
 router.get('/person', async (req, res) => {
   const { data, error } = await supabase
