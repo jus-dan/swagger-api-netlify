@@ -142,24 +142,28 @@ router.post('/', async (req, res) => {
       body = JSON.parse(body.toString('utf-8'));
     }
 
+    console.log('📥 typeof req.body:', typeof req.body);
+    console.log('📥 Request Body:', req.body); // Wird im Netlify-Log angezeigt
 
+    const { name, email, roles } = req.body;
 
-  console.log('📥 typeof req.body:', typeof req.body);
-  console.log('📥 Request Body:', req.body); // Wird im Netlify-Log angezeigt
+    if (!name || !email || !Array.isArray(roles)) {
+        return res.status(400).json({ error: 'Name, E-Mail und Rollen erforderlich' });
+    }
 
-  const { name, email, roles } = req.body;
+    const { data, error } = await supabase
+        .from('person')
+        .insert([{ name, email, roles }])
+        .select();
 
-  if (!name || !email || !Array.isArray(roles)) {
-    return res.status(400).json({ error: 'Name, E-Mail und Rollen erforderlich' });
+    if (error) return res.status(400).json({ error: error.message });
+    res.status(201).json(data[0]);
+
+  } catch (err) {
+    console.error('❌ Fehler beim Parsen des Bodys:', err.message);
+    res.status(500).json({ error: 'Serverfehler beim Parsen der Anfrage' });
   }
 
-  const { data, error } = await supabase
-    .from('person')
-    .insert([{ name, email, roles }])
-    .select();
-
-  if (error) return res.status(400).json({ error: error.message });
-  res.status(201).json(data[0]);
 });
 
 router.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
