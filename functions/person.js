@@ -44,7 +44,7 @@ const supabase = createClient(
 
 /**
  * @swagger
- * /person:
+ * /:
  *   get:
  *     summary: Liste aller Personen
  *     responses:
@@ -65,7 +65,7 @@ router.get('/', async (req, res) => {
 
 /**
  * @swagger
- * /person/{id}:
+ * /{id}:
  *   get:
  *     summary: Einzelne Person anzeigen
  *     parameters:
@@ -97,7 +97,7 @@ router.get('/:id', async (req, res) => {
 
 /**
  * @swagger
- * /person:
+ * /:
  *   post:
  *     summary: Neue Person anlegen
  *     requestBody:
