@@ -145,7 +145,8 @@ router.post('/', async (req, res) => {
     console.log('📥 typeof req.body:', typeof body);
     console.log('📥 Request Body:', body); // Wird im Netlify-Log angezeigt
 
-    const { name, email, roles } = req.body;
+    const { name, email, roles } = body;
+
 
     if (!name || !email || !Array.isArray(roles)) {
         return res.status(400).json({ error: 'Name, E-Mail und Rollen erforderlich' });
