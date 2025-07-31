@@ -145,6 +145,11 @@ router.post('/', async (req, res) => {
     console.log('📥 typeof req.body:', typeof body);
     console.log('📥 Request Body:', body); // Wird im Netlify-Log angezeigt
 
+    if (typeof body !== 'object') {
+        return res.status(400).json({ error: 'Ungültiger Anfrageinhalt' });
+    }
+
+
     const { name, email, roles } = body;
 
 
@@ -166,8 +171,6 @@ router.post('/', async (req, res) => {
   }
 
 });
-
-router.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Swagger-Doku zuerst am Haupt-Router einhängen
 app.use('/.netlify/functions/person/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
