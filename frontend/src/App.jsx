@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 
 function App() {
-  const [activeTab, setActiveTab] = useState('persons')
+  const [activeTab, setActiveTab] = useState('dashboard')
   const [persons, setPersons] = useState([])
   const [resources, setResources] = useState([])
   const [categories, setCategories] = useState([])
@@ -87,6 +87,46 @@ function App() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Dashboard statistics
+  const getDashboardStats = () => {
+    const totalPersons = persons.length
+    const activePersons = persons.filter(p => p.active).length
+    const totalResources = resources.length
+    const availableResources = resources.filter(r => r.status === 'available').length
+    const maintenanceResources = resources.filter(r => r.status === 'maintenance').length
+    const outOfOrderResources = resources.filter(r => r.status === 'out_of_order').length
+    const totalCategories = categories.length
+    const totalRoles = roles.length
+
+    return {
+      totalPersons,
+      activePersons,
+      totalResources,
+      availableResources,
+      maintenanceResources,
+      outOfOrderResources,
+      totalCategories,
+      totalRoles
+    }
+  }
+
+  const getRecentItems = () => {
+    const recentPersons = persons.slice(-3).reverse()
+    const recentResources = resources.slice(-3).reverse()
+    const recentCategories = categories.slice(-3).reverse()
+
+    return { recentPersons, recentResources, recentCategories }
+  }
+
+  const getResourceStatusDistribution = () => {
+    const stats = getDashboardStats()
+    return [
+      { label: 'Verfügbar', value: stats.availableResources, color: '#28a745' },
+      { label: 'Wartung', value: stats.maintenanceResources, color: '#ffc107' },
+      { label: 'Außer Betrieb', value: stats.outOfOrderResources, color: '#dc3545' }
+    ]
   }
 
   // Search and filter functions
@@ -432,6 +472,12 @@ function App() {
         <h1>🏭 Makerspace Verwaltung</h1>
         <nav>
           <button 
+            className={activeTab === 'dashboard' ? 'active' : ''} 
+            onClick={() => setActiveTab('dashboard')}
+          >
+            📊 Dashboard
+          </button>
+          <button 
             className={activeTab === 'persons' ? 'active' : ''} 
             onClick={() => setActiveTab('persons')}
           >
@@ -459,6 +505,123 @@ function App() {
       </header>
 
       <main>
+        {activeTab === 'dashboard' && (
+          <div className="section">
+            <h2>📊 Dashboard</h2>
+            <div className="dashboard-stats">
+              <div className="stat-card">
+                <h3>👥 Personen</h3>
+                <p>Gesamt: {getDashboardStats().totalPersons}</p>
+                <p>Aktiv: {getDashboardStats().activePersons}</p>
+              </div>
+              <div className="stat-card">
+                <h3>🛠️ Ressourcen</h3>
+                <p>Gesamt: {getDashboardStats().totalResources}</p>
+                <p>Verfügbar: {getDashboardStats().availableResources}</p>
+                <p>Wartung: {getDashboardStats().maintenanceResources}</p>
+                <p>Außer Betrieb: {getDashboardStats().outOfOrderResources}</p>
+              </div>
+              <div className="stat-card">
+                <h3>📂 Kategorien</h3>
+                <p>Gesamt: {getDashboardStats().totalCategories}</p>
+              </div>
+              <div className="stat-card">
+                <h3>🎭 Rollen</h3>
+                <p>Gesamt: {getDashboardStats().totalRoles}</p>
+              </div>
+            </div>
+
+            <h3>🔍 Aktuelle Suchen und Filter</h3>
+            <div className="search-filters">
+              <div className="search-box">
+                <input
+                  type="text"
+                  placeholder="Suchen nach Name, E-Mail oder Rolle..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="sort-select">
+                <label htmlFor="sortField">Sortieren nach:</label>
+                <select id="sortField" value={sortField} onChange={(e) => handleSort(e.target.value)}>
+                  <option value="">Keine Sortierung</option>
+                  <option value="name">Name</option>
+                  <option value="email">E-Mail</option>
+                  <option value="roles">Rollen</option>
+                  <option value="active">Status</option>
+                </select>
+                <select id="sortDirection" value={sortDirection} onChange={(e) => setSortDirection(e.target.value)}>
+                  <option value="asc">Aufsteigend</option>
+                  <option value="desc">Absteigend</option>
+                </select>
+              </div>
+            </div>
+
+                         <h3>👥 Letzte Personen</h3>
+             <div className="recent-items">
+               {getRecentItems().recentPersons.length === 0 ? (
+                 <p>Keine neuen Personen hinzugefügt.</p>
+               ) : (
+                 getRecentItems().recentPersons.map(person => (
+                   <div key={person.id} className="item-card">
+                     <h4>{person.name}</h4>
+                     <p>E-Mail: {person.email}</p>
+                     <p>Rollen: {person.roles.map(role => getRoleLabel(role)).join(', ')}</p>
+                     <p>Status: <span className={`status-badge ${person.active ? 'available' : 'out_of_order'}`}>
+                       {person.active ? 'Aktiv' : 'Inaktiv'}
+                     </span></p>
+                     <div className="actions">
+                       <button className="btn-secondary" onClick={() => handlePersonEdit(person)}>Bearbeiten</button>
+                       <button className="btn-danger" onClick={() => handlePersonDelete(person.id)}>Löschen</button>
+                     </div>
+                   </div>
+                 ))
+               )}
+             </div>
+
+             <h3>🛠️ Letzte Ressourcen</h3>
+             <div className="recent-items">
+               {getRecentItems().recentResources.length === 0 ? (
+                 <p>Keine neuen Ressourcen hinzugefügt.</p>
+               ) : (
+                 getRecentItems().recentResources.map(resource => (
+                   <div key={resource.id} className="item-card">
+                     <h4>{resource.name}</h4>
+                     <p>Kategorie: {getCategoryName(resource.category_id)}</p>
+                     <p>Status: <span className={`status-badge ${getStatusColor(resource.status)}`}>
+                       {getStatusText(resource.status)}
+                     </span></p>
+                     <p>Standort: {resource.location || '-'}</p>
+                     <div className="actions">
+                       <button className="btn-secondary" onClick={() => handleResourceEdit(resource)}>Bearbeiten</button>
+                       <button className="btn-danger" onClick={() => handleResourceDelete(resource.id)}>Löschen</button>
+                     </div>
+                   </div>
+                 ))
+               )}
+             </div>
+
+             <h3>📂 Letzte Kategorien</h3>
+             <div className="recent-items">
+               {getRecentItems().recentCategories.length === 0 ? (
+                 <p>Keine neuen Kategorien hinzugefügt.</p>
+               ) : (
+                 getRecentItems().recentCategories.map(category => (
+                   <div key={category.id} className="item-card">
+                     <h4>{category.name}</h4>
+                     <p>Beschreibung: {category.description || '-'}</p>
+                     <p>Icon: {category.icon || '-'}</p>
+                     <div className="actions">
+                       <button className="btn-secondary" onClick={() => handleCategoryEdit(category)}>Bearbeiten</button>
+                       <button className="btn-danger" onClick={() => handleCategoryDelete(category.id)}>Löschen</button>
+                     </div>
+                   </div>
+                 ))
+               )}
+             </div>
+          </div>
+        )}
+
         {activeTab === 'persons' && (
           <div className="section">
             <div className="section-header">

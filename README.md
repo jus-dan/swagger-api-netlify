@@ -4,18 +4,37 @@ Eine vollständige Makerspace-Verwaltungsanwendung mit API-First-Ansatz, die das
 
 ## ✨ Features
 
+### 📊 Dashboard (Startseite)
+- **Statistik-Übersicht**: Personen, Ressourcen, Kategorien und Rollen auf einen Blick
+- **Letzte Einträge**: Die neuesten Personen, Ressourcen und Kategorien
+- **Schnelle Aktionen**: Bearbeiten und Löschen direkt vom Dashboard
+- **Status-Tracking**: Verfügbarkeit von Ressourcen in Echtzeit
+- **Responsive Design**: Optimiert für Desktop und Mobile
+
 ### 👥 Personenverwaltung
 - **Anlegen** neuer Personen mit Name, E-Mail und Rollen
 - **Bearbeiten** bestehender Personen
 - **Löschen** von Personen
 - **Anzeigen** aller Personen mit Details
+- **Rollen-Management**: Benutzer, Mitarbeiter, Coaches, Administratoren
 
 ### 🛠️ Ressourcenverwaltung
 - **Kategorien**: Maschinen, Räume, Werkzeuge, Materialien, Computer
-- **Status-Tracking**: Verfügbar, Wartung, Defekt
+- **Status-Tracking**: Verfügbar, Wartung, Außer Betrieb
 - **Spezifikationen**: Flexible JSON-Speicherung für technische Details
 - **Standort-Management**: Tracking von Ressourcen-Standorten
 - **Bild-Unterstützung**: URLs für Ressourcen-Bilder
+
+### 📂 Kategorienverwaltung
+- **Erstellen** neuer Kategorien mit Icons und Farben
+- **Bearbeiten** bestehender Kategorien
+- **Organisation** von Ressourcen nach Kategorien
+- **Visuelle Darstellung** mit Farbkodierung
+
+### 🎭 Rollenverwaltung
+- **Definieren** von Benutzerrollen (User, Staff, Coach, Admin, etc.)
+- **Berechtigungen** für verschiedene Funktionen
+- **Flexible Rollenstruktur** für verschiedene Makerspace-Typen
 
 ### 📚 API-First Design
 - **RESTful APIs** für alle CRUD-Operationen
@@ -27,7 +46,8 @@ Eine vollständige Makerspace-Verwaltungsanwendung mit API-First-Ansatz, die das
 - **React + Vite** für schnelle Entwicklung
 - **Responsive Design** für Desktop und Mobile
 - **Moderne UI** mit Modals, Cards und Animationen
-- **Intuitive Navigation** zwischen Personen und Ressourcen
+- **Intuitive Navigation** zwischen Dashboard und allen Bereichen
+- **Such- und Filterfunktionen** für alle Daten
 
 ## 🚀 Technologie-Stack
 
@@ -80,7 +100,11 @@ Führen Sie das SQL-Schema in Ihrer Supabase-Datenbank aus:
 
 ### Lokaler Server starten
 ```bash
+# Im Hauptverzeichnis
 npm run dev
+
+# Oder im Frontend-Verzeichnis
+cd frontend && npm run dev
 ```
 
 ### Netlify Functions lokal testen
@@ -146,7 +170,23 @@ Die Anwendung ist dann verfügbar unter:
 - 📦 Materialien (Holz, Metall, Kunststoff)
 - 💻 Computer (Laptops, Desktop-PCs, Tablets)
 
+### Standard-Rollen
+- 👤 Benutzer (User)
+- 👷 Mitarbeiter (Staff)
+- 🎯 Coach
+- 🔧 Wartung (Maintenance)
+- 👨‍💼 Administrator (Admin)
+- 🏢 CEO
+- 💻 CTO
+- 👨‍🏫 Instruktor (Instructor)
+
 ## 🎯 Verwendung
+
+### Dashboard
+1. **Startseite** zeigt Übersicht aller Daten
+2. **Statistik-Karten** mit aktuellen Zahlen
+3. **Letzte Einträge** für schnellen Überblick
+4. **Schnelle Aktionen** direkt vom Dashboard
 
 ### Personen hinzufügen
 1. Tab "Personen" wählen
@@ -158,6 +198,12 @@ Die Anwendung ist dann verfügbar unter:
 1. Tab "Ressourcen" wählen
 2. "Neue Ressource" klicken
 3. Name, Kategorie und weitere Details eingeben
+4. "Erstellen" klicken
+
+### Kategorien verwalten
+1. Tab "Kategorien" wählen
+2. "Neue Kategorie" klicken
+3. Name, Beschreibung, Icon und Farbe eingeben
 4. "Erstellen" klicken
 
 ### Bearbeiten/Löschen
@@ -196,14 +242,20 @@ taskkill /PID <PID> /F
 - Überprüfen Sie die Netlify-Function-Logs
 - Testen Sie die API-Endpunkte direkt über Swagger
 
+**Dashboard lädt nicht**
+- Überprüfen Sie die Browser-Konsole auf Fehler
+- Stellen Sie sicher, dass alle API-Endpunkte funktionieren
+
 ## 🔮 Zukünftige Features
 
 - 📅 **Buchungssystem** für Ressourcen
 - 🔔 **Benachrichtigungen** für Wartungen
-- 📊 **Dashboard** mit Statistiken
+- 📈 **Erweiterte Statistiken** und Charts
 - 👤 **Authentifizierung** und Rollen-Management
 - 📱 **Mobile App** (React Native)
 - 🔍 **Erweiterte Suche** und Filter
+- 📊 **Export-Funktionen** (PDF, Excel)
+- 🔄 **Automatische Backups**
 
 ## 📄 Lizenz
 
