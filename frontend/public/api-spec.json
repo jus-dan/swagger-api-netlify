@@ -122,6 +122,531 @@
             "description": "Serverfehler"
           }
         }
+      },
+      "put": {
+        "summary": "Person bearbeiten",
+        "description": "Aktualisiert eine bestehende Person",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID der Person"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "roles": { 
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "active": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Person erfolgreich aktualisiert"
+          },
+          "400": {
+            "description": "Fehlerhafte Eingabe"
+          },
+          "404": {
+            "description": "Person nicht gefunden"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Person löschen",
+        "description": "Löscht eine Person aus der Datenbank",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID der Person"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Person erfolgreich gelöscht"
+          },
+          "404": {
+            "description": "Person nicht gefunden"
+          }
+        }
+      }
+    },
+    "/resource": {
+      "get": {
+        "summary": "Liste aller Ressourcen",
+        "description": "Gibt eine Liste aller Ressourcen (Maschinen, Räume, etc.) zurück",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": { "type": "integer" },
+            "description": "Filter nach Kategorie-ID"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter nach Status (available, maintenance, out_of_order)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Erfolgreich",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "name": { "type": "string" },
+                      "description": { "type": "string" },
+                      "category_id": { "type": "integer" },
+                      "status": { "type": "string" },
+                      "location": { "type": "string" },
+                      "specifications": { "type": "object" },
+                      "image_url": { "type": "string" },
+                      "resource_category": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "name": { "type": "string" },
+                          "description": { "type": "string" },
+                          "icon": { "type": "string" },
+                          "color": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Neue Ressource erstellen",
+        "description": "Erstellt eine neue Ressource (Maschine, Raum, etc.)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "category_id"],
+                "properties": {
+                  "name": { 
+                    "type": "string",
+                    "description": "Name der Ressource"
+                  },
+                  "description": { 
+                    "type": "string",
+                    "description": "Beschreibung der Ressource"
+                  },
+                  "category_id": { 
+                    "type": "integer",
+                    "description": "ID der Kategorie"
+                  },
+                  "status": { 
+                    "type": "string",
+                    "enum": ["available", "maintenance", "out_of_order"],
+                    "description": "Status der Ressource"
+                  },
+                  "location": { 
+                    "type": "string",
+                    "description": "Standort der Ressource"
+                  },
+                  "specifications": { 
+                    "type": "object",
+                    "description": "Technische Spezifikationen"
+                  },
+                  "image_url": { 
+                    "type": "string",
+                    "description": "URL zu einem Bild der Ressource"
+                  }
+                }
+              },
+              "example": {
+                "name": "3D-Drucker Ultimaker",
+                "description": "Industrieller 3D-Drucker für große Projekte",
+                "category_id": 1,
+                "status": "available",
+                "location": "Werkstatt A",
+                "specifications": {
+                  "build_volume": "330x240x300mm",
+                  "material": "PLA, ABS, PETG"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ressource erfolgreich erstellt"
+          },
+          "400": {
+            "description": "Fehlerhafte Eingabe"
+          }
+        }
+      }
+    },
+    "/resource/{id}": {
+      "get": {
+        "summary": "Einzelne Ressource abrufen",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID der Ressource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Erfolgreich"
+          },
+          "404": {
+            "description": "Ressource nicht gefunden"
+          }
+        }
+      },
+      "put": {
+        "summary": "Ressource bearbeiten",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID der Ressource"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "category_id": { "type": "integer" },
+                  "status": { "type": "string", "enum": ["available", "maintenance", "out_of_order"] },
+                  "location": { "type": "string" },
+                  "specifications": { "type": "object" },
+                  "image_url": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ressource erfolgreich aktualisiert"
+          },
+          "404": {
+            "description": "Ressource nicht gefunden"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Ressource löschen",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID der Ressource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ressource erfolgreich gelöscht"
+          },
+          "404": {
+            "description": "Ressource nicht gefunden"
+          }
+        }
+      }
+    },
+    "/category": {
+      "get": {
+        "summary": "Liste aller Kategorien",
+        "description": "Gibt eine Liste aller Ressourcen-Kategorien zurück",
+        "responses": {
+          "200": {
+            "description": "Erfolgreich",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "name": { "type": "string" },
+                      "description": { "type": "string" },
+                      "icon": { "type": "string" },
+                      "color": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Neue Kategorie erstellen",
+        "description": "Erstellt eine neue Ressourcen-Kategorie",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { 
+                    "type": "string",
+                    "description": "Name der Kategorie"
+                  },
+                  "description": { 
+                    "type": "string",
+                    "description": "Beschreibung der Kategorie"
+                  },
+                  "icon": { 
+                    "type": "string",
+                    "description": "Icon für die Kategorie"
+                  },
+                  "color": { 
+                    "type": "string",
+                    "description": "Farbe für die Kategorie (Hex-Code)"
+                  }
+                }
+              },
+              "example": {
+                "name": "Elektronik",
+                "description": "Elektronische Komponenten und Geräte",
+                "icon": "electronics",
+                "color": "#FF6B6B"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Kategorie erfolgreich erstellt"
+          },
+          "400": {
+            "description": "Fehlerhafte Eingabe"
+          }
+        }
+      }
+    },
+    "/category/{id}": {
+      "get": {
+        "summary": "Einzelne Kategorie abrufen",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID der Kategorie"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Erfolgreich"
+          },
+          "404": {
+            "description": "Kategorie nicht gefunden"
+          }
+        }
+      },
+      "put": {
+        "summary": "Kategorie bearbeiten",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID der Kategorie"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "icon": { "type": "string" },
+                  "color": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kategorie erfolgreich aktualisiert"
+          },
+          "404": {
+            "description": "Kategorie nicht gefunden"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Kategorie löschen",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID der Kategorie"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kategorie erfolgreich gelöscht"
+          },
+          "404": {
+            "description": "Kategorie nicht gefunden"
+          }
+        }
+      }
+    },
+      "get": {
+        "summary": "Liste aller Personen",
+        "description": "Gibt eine Liste aller Personen aus der Datenbank zurück",
+        "responses": {
+          "200": {
+            "description": "Erfolgreich",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "name": { "type": "string" },
+                      "email": { "type": "string" },
+                      "roles": { 
+                        "type": "array",
+                        "items": { "type": "string" }
+                      },
+                      "active": { "type": "boolean" },
+                      "created_at": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Serverfehler"
+          }
+        }
+      },
+      "post": {
+        "summary": "Neue Person erstellen",
+        "description": "Erstellt eine neue Person in der Datenbank",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "roles"],
+                "properties": {
+                  "name": { 
+                    "type": "string",
+                    "description": "Name der Person (mindestens 2 Zeichen)"
+                  },
+                  "email": { 
+                    "type": "string",
+                    "format": "email",
+                    "description": "E-Mail-Adresse der Person"
+                  },
+                  "roles": { 
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Rollen der Person (mindestens eine Rolle)"
+                  }
+                }
+              },
+              "example": {
+                "name": "Max Mustermann",
+                "email": "max@example.com",
+                "roles": ["admin", "user"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Person erfolgreich erstellt"
+          },
+          "400": {
+            "description": "Fehlerhafte Eingabe"
+          },
+          "500": {
+            "description": "Serverfehler"
+          }
+        }
+      }
+    },
+    "/person/{id}": {
+      "get": {
+        "summary": "Einzelne Person abrufen",
+        "description": "Gibt eine einzelne Person anhand der ID zurück",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID der Person"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Erfolgreich"
+          },
+          "404": {
+            "description": "Person nicht gefunden"
+          },
+          "500": {
+            "description": "Serverfehler"
+          }
+        }
       }
     },
     "/hello": {

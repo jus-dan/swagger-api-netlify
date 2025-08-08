@@ -15,6 +15,21 @@
   status = 200
 
 [[redirects]]
+  from = "/api/person/*"
+  to = "/.netlify/functions/person/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/resource/*"
+  to = "/.netlify/functions/resource/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/category/*"
+  to = "/.netlify/functions/category/:splat"
+  status = 200
+
+[[redirects]]
   from = "/api-docs"
   to = "/.netlify/functions/api/api-docs"
   status = 200
