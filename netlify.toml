@@ -25,6 +25,16 @@
   status = 200
 
 [[redirects]]
+  from = "/docs"
+  to = "/.netlify/functions/swagger"
+  status = 200
+
+[[redirects]]
+  from = "/swagger"
+  to = "/.netlify/functions/swagger"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

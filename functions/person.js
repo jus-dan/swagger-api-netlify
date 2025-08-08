@@ -225,7 +225,16 @@ router.post('/', async (req, res) => {
 });
 
 // Swagger-Doku zuerst am Haupt-Router einhängen
-app.use('/.netlify/functions/person/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/.netlify/functions/person/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: "Makerspace API - Person"
+}));
+
+// Alternative Swagger-Route ohne .netlify/functions
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: "Makerspace API - Person"
+}));
 
 // Dann die eigentliche API einhängen
 app.use('/.netlify/functions/person', router);
