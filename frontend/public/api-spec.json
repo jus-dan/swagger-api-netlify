@@ -1,0 +1,149 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Makerspace API",
+    "version": "1.0.0",
+    "description": "API für Makerspace-Verwaltung"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8888/.netlify/functions",
+      "description": "Local Server"
+    },
+    {
+      "url": "https://radiant-maamoul-fab9c6.netlify.app/.netlify/functions",
+      "description": "Production Server"
+    }
+  ],
+  "paths": {
+    "/person": {
+      "get": {
+        "summary": "Liste aller Personen",
+        "description": "Gibt eine Liste aller Personen aus der Datenbank zurück",
+        "responses": {
+          "200": {
+            "description": "Erfolgreich",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "name": { "type": "string" },
+                      "email": { "type": "string" },
+                      "roles": { 
+                        "type": "array",
+                        "items": { "type": "string" }
+                      },
+                      "active": { "type": "boolean" },
+                      "created_at": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Serverfehler"
+          }
+        }
+      },
+      "post": {
+        "summary": "Neue Person erstellen",
+        "description": "Erstellt eine neue Person in der Datenbank",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "roles"],
+                "properties": {
+                  "name": { 
+                    "type": "string",
+                    "description": "Name der Person (mindestens 2 Zeichen)"
+                  },
+                  "email": { 
+                    "type": "string",
+                    "format": "email",
+                    "description": "E-Mail-Adresse der Person"
+                  },
+                  "roles": { 
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Rollen der Person (mindestens eine Rolle)"
+                  }
+                }
+              },
+              "example": {
+                "name": "Max Mustermann",
+                "email": "max@example.com",
+                "roles": ["admin", "user"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Person erfolgreich erstellt"
+          },
+          "400": {
+            "description": "Fehlerhafte Eingabe"
+          },
+          "500": {
+            "description": "Serverfehler"
+          }
+        }
+      }
+    },
+    "/person/{id}": {
+      "get": {
+        "summary": "Einzelne Person abrufen",
+        "description": "Gibt eine einzelne Person anhand der ID zurück",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID der Person"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Erfolgreich"
+          },
+          "404": {
+            "description": "Person nicht gefunden"
+          },
+          "500": {
+            "description": "Serverfehler"
+          }
+        }
+      }
+    },
+    "/hello": {
+      "get": {
+        "summary": "Einfache Begrüßung",
+        "description": "Gibt eine einfache Begrüßungsnachricht zurück",
+        "responses": {
+          "200": {
+            "description": "Erfolgreich",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
