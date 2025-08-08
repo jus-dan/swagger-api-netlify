@@ -220,7 +220,7 @@ MIT License - siehe [LICENSE](LICENSE) Datei für Details.
 ## 📞 Support
 
 Bei Fragen oder Problemen:
-- 📧 E-Mail: support@makerspace.com
+- 📧 E-Mail: ...
 - 🐛 Issues: GitHub Issues
 - 📚 Dokumentation: Swagger UI unter `/swagger.html`
 

@@ -18,6 +18,15 @@
             margin:0;
             background: #fafafa;
         }
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            color: #721c24;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            margin: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -26,21 +35,42 @@
     <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
     <script>
         window.onload = function() {
-            const ui = SwaggerUIBundle({
-                url: '/api-spec.json',
-                dom_id: '#swagger-ui',
-                deepLinking: true,
-                presets: [
-                    SwaggerUIBundle.presets.apis,
-                    SwaggerUIStandalonePreset
-                ],
-                plugins: [
-                    SwaggerUIBundle.plugins.DownloadUrl
-                ],
-                layout: "StandaloneLayout",
-                customCss: '.swagger-ui .topbar { display: none }',
-                customSiteTitle: "Makerspace API Documentation"
-            });
+            // Try to load the API spec
+            fetch('/api-spec.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('API spec not found');
+                    }
+                    return response.json();
+                })
+                .then(spec => {
+                    const ui = SwaggerUIBundle({
+                        spec: spec,
+                        dom_id: '#swagger-ui',
+                        deepLinking: true,
+                        presets: [
+                            SwaggerUIBundle.presets.apis,
+                            SwaggerUIStandalonePreset
+                        ],
+                        plugins: [
+                            SwaggerUIBundle.plugins.DownloadUrl
+                        ],
+                        layout: "StandaloneLayout",
+                        customCss: '.swagger-ui .topbar { display: none }',
+                        customSiteTitle: "Makerspace API Documentation"
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading API spec:', error);
+                    document.getElementById('swagger-ui').innerHTML = `
+                        <div class="error-message">
+                            <h2>Fehler beim Laden der API-Dokumentation</h2>
+                            <p>Die API-Spezifikation konnte nicht geladen werden.</p>
+                            <p>Fehler: ${error.message}</p>
+                            <p>Versuchen Sie es später erneut oder kontaktieren Sie den Administrator.</p>
+                        </div>
+                    `;
+                });
         };
     </script>
 </body>

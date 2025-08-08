@@ -1,0 +1,27 @@
+
+Technologie-Stack:
+🚀 Frontend: React + Vite
+🔧 Backend: Node.js + Express + Netlify Functions
+🗄️ Datenbank: Supabase (PostgreSQL)
+📚 API-Dokumentation: Swagger/OpenAPI
+☁️ Deployment: Netlify
+
+
+Verfügbare Features:
+📋 Personen anzeigen - GET /person
+➕ Neue Person erstellen - POST /person
+🔍 Einzelne Person abrufen - GET /person/{id}
+👋 Einfache Begrüßung - GET /hello
+📖 Interaktive API-Dokumentation - Swagger UI
+
+
+Lokal:
+✅ Frontend: http://localhost:8888/
+✅ Swagger: http://localhost:8888/swagger.html
+✅ API: http://localhost:8888/.netlify/functions/person
+
+
+Production (Netlify):
+✅ Frontend: https://radiant-maamoul-fab9c6.netlify.app/
+✅ Swagger: https://radiant-maamoul-fab9c6.netlify.app/swagger.html
+✅ API: https://radiant-maamoul-fab9c6.netlify.app/.netlify/functions/person
