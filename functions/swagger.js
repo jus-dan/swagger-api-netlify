@@ -13,12 +13,16 @@ const swaggerSpec = swaggerJsdoc({
     },
     servers: [
       {
-        url: process.env.URL || 'https://radiant-maamoul-fab9c6.netlify.app',
+        url: process.env.URL || 'http://localhost:8888',
+        description: 'Local Server',
+      },
+      {
+        url: 'https://radiant-maamoul-fab9c6.netlify.app',
         description: 'Production Server',
       }
     ]
   },
-  apis: ['./functions/*.js'],
+  apis: ['./functions/person.js', './functions/api.js'],
 });
 
 const app = express();

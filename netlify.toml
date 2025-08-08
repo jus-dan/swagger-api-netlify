@@ -35,6 +35,11 @@
   status = 200
 
 [[redirects]]
+  from = "/swagger-simple"
+  to = "/.netlify/functions/swagger-simple"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
