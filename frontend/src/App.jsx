@@ -9,7 +9,7 @@ function App() {
     // Für lokale Entwicklung
     const apiUrl = import.meta.env.DEV 
       ? 'http://localhost:8888/.netlify/functions/person'
-      : '/api/person';
+      : '/.netlify/functions/person';
     
     console.log('🌐 Fetching from:', apiUrl);
     
