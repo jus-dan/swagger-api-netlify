@@ -110,7 +110,7 @@ function App() {
       totalCategories,
       totalRoles
     }
-  }
+  } 
 
   const getRecentItems = () => {
     const recentPersons = persons.slice(-3).reverse()
