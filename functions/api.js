@@ -6,6 +6,18 @@ const swaggerUi = require('swagger-ui-express');
 const app = express();
 const router = express.Router();
 
+// CORS middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 /**
  * @swagger
  * /hello:
@@ -25,7 +37,14 @@ const swaggerSpec = swaggerJsdoc({
     info: {
       title: 'Meine Swagger API',
       version: '1.0.0',
+      description: 'API für einfache Begrüßungen',
     },
+    servers: [
+      {
+        url: process.env.URL || 'http://localhost:8888',
+        description: 'API Server',
+      }
+    ]
   },
   apis: ['./functions/api.js'],
 });
