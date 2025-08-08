@@ -27,50 +27,98 @@
             border-radius: 4px;
             margin: 1rem;
         }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #0c5460;
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            margin: 1rem;
+        }
     </style>
 </head>
 <body>
-    <div id="swagger-ui"></div>
+    <div id="swagger-ui">
+        <div class="loading">
+            <h2>Lade API-Dokumentation...</h2>
+            <p>Bitte warten Sie, während die API-Spezifikation geladen wird.</p>
+        </div>
+    </div>
     <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
     <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
     <script>
         window.onload = function() {
-            // Try to load the API spec
-            fetch('/api-spec.json')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('API spec not found');
-                    }
-                    return response.json();
-                })
-                .then(spec => {
-                    const ui = SwaggerUIBundle({
-                        spec: spec,
-                        dom_id: '#swagger-ui',
-                        deepLinking: true,
-                        presets: [
-                            SwaggerUIBundle.presets.apis,
-                            SwaggerUIStandalonePreset
-                        ],
-                        plugins: [
-                            SwaggerUIBundle.plugins.DownloadUrl
-                        ],
-                        layout: "StandaloneLayout",
-                        customCss: '.swagger-ui .topbar { display: none }',
-                        customSiteTitle: "Makerspace API Documentation"
-                    });
-                })
-                .catch(error => {
-                    console.error('Error loading API spec:', error);
+            // Try multiple URLs for the API spec
+            const apiSpecUrls = [
+                '/api-spec.json',
+                './api-spec.json',
+                '/swagger-api-netlify/api-spec.json'
+            ];
+            
+            let currentUrlIndex = 0;
+            
+            function tryLoadApiSpec() {
+                if (currentUrlIndex >= apiSpecUrls.length) {
+                    // All URLs failed, show error
                     document.getElementById('swagger-ui').innerHTML = `
                         <div class="error-message">
                             <h2>Fehler beim Laden der API-Dokumentation</h2>
                             <p>Die API-Spezifikation konnte nicht geladen werden.</p>
-                            <p>Fehler: ${error.message}</p>
-                            <p>Versuchen Sie es später erneut oder kontaktieren Sie den Administrator.</p>
+                            <p>Versuche URLs:</p>
+                            <ul>
+                                ${apiSpecUrls.map(url => `<li>${url}</li>`).join('')}
+                            </ul>
+                            <p>Bitte überprüfen Sie:</p>
+                            <ul>
+                                <li>Ob die Datei api-spec.json im public-Ordner existiert</li>
+                                <li>Ob der Server läuft</li>
+                                <li>Die Browser-Konsole auf weitere Fehler</li>
+                            </ul>
                         </div>
                     `;
-                });
+                    return;
+                }
+                
+                const url = apiSpecUrls[currentUrlIndex];
+                console.log(`Versuche API-Spec von: ${url}`);
+                
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(spec => {
+                        console.log('API-Spec erfolgreich geladen:', spec);
+                        const ui = SwaggerUIBundle({
+                            spec: spec,
+                            dom_id: '#swagger-ui',
+                            deepLinking: true,
+                            presets: [
+                                SwaggerUIBundle.presets.apis,
+                                SwaggerUIStandalonePreset
+                            ],
+                            plugins: [
+                                SwaggerUIBundle.plugins.DownloadUrl
+                            ],
+                            layout: "StandaloneLayout",
+                            customCss: '.swagger-ui .topbar { display: none }',
+                            customSiteTitle: "Makerspace API Documentation",
+                            onComplete: function() {
+                                console.log('Swagger UI erfolgreich geladen');
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error(`Fehler beim Laden von ${url}:`, error);
+                        currentUrlIndex++;
+                        setTimeout(tryLoadApiSpec, 1000); // Try next URL after 1 second
+                    });
+            }
+            
+            tryLoadApiSpec();
         };
     </script>
 </body>
