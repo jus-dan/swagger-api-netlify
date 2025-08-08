@@ -1,7 +1,10 @@
 [build]
-  command = "npm install && cd frontend && npm install && npm run build"
+  command = "npm run build"
   publish = "frontend/dist"
   functions = "functions"
+
+[build.environment]
+  NODE_VERSION = "18"
 
 [functions]
   node_bundler = "esbuild"
