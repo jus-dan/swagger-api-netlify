@@ -15,6 +15,13 @@ Verfügbare Features:
 📖 Interaktive API-Dokumentation - Swagger UI
 
 
+Tools:
+https://github.com/jus-dan/swagger-api-netlify
+https://app.netlify.com/projects/radiant-maamoul-fab9c6/overview
+https://supabase.com/dashboard/project/kuwssdhydtjrkmvqajzc
+https://radiant-maamoul-fab9c6.netlify.app/
+
+
 Lokal:
 ✅ Frontend: http://localhost:8888/
 ✅ Swagger: http://localhost:8888/swagger.html
