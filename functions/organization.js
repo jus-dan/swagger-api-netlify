@@ -3,6 +3,8 @@ const serverless = require('serverless-http');
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 
+console.log('🚀 Organization.js wird geladen...');
+
 const app = express();
 const router = express.Router();
 
@@ -10,9 +12,18 @@ const router = express.Router();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+console.log('✅ Middleware geladen');
+
 // Supabase Client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+console.log('🔍 Umgebungsvariablen prüfen:', {
+  hasSupabaseUrl: !!supabaseUrl,
+  hasSupabaseKey: !!supabaseKey,
+  supabaseUrl: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'FEHLT',
+  supabaseKey: supabaseKey ? `${supabaseKey.substring(0, 10)}...` : 'FEHLT'
+});
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Supabase Umgebungsvariablen fehlen:', { 
@@ -21,7 +32,13 @@ if (!supabaseUrl || !supabaseKey) {
   });
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+let supabase;
+try {
+  supabase = createClient(supabaseUrl, supabaseKey);
+  console.log('✅ Supabase Client erstellt');
+} catch (error) {
+  console.error('❌ Fehler beim Erstellen des Supabase Clients:', error);
+}
 
 // ========================================
 // TEST ROUTE
@@ -29,14 +46,28 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 router.get('/test', (req, res) => {
   console.log('🧪 GET /test aufgerufen');
-  res.json({ 
-    message: 'Organization API läuft!',
-    timestamp: new Date().toISOString(),
-    env: {
-      hasSupabaseUrl: !!supabaseUrl,
-      hasSupabaseKey: !!supabaseKey
-    }
-  });
+  try {
+    const response = {
+      message: 'Organization API läuft!',
+      timestamp: new Date().toISOString(),
+      env: {
+        hasSupabaseUrl: !!supabaseUrl,
+        hasSupabaseKey: !!supabaseKey,
+        nodeEnv: process.env.NODE_ENV,
+        nodeVersion: process.version
+      },
+      supabase: {
+        hasClient: !!supabase,
+        clientType: supabase ? typeof supabase : 'undefined'
+      }
+    };
+    
+    console.log('📤 Test-Antwort:', response);
+    res.json(response);
+  } catch (error) {
+    console.error('❌ Fehler in Test-Route:', error);
+    res.status(500).json({ error: 'Test-Route Fehler', details: error.message });
+  }
 });
 
 // ========================================
@@ -46,8 +77,21 @@ router.get('/test', (req, res) => {
 router.post('/register', async (req, res) => {
   console.log('🔄 POST /register empfangen');
   console.log('📋 Request Body:', req.body);
+  console.log('📋 Request Headers:', req.headers);
   
   try {
+    // Prüfe Supabase-Client
+    if (!supabase) {
+      console.error('❌ Supabase Client nicht verfügbar');
+      return res.status(500).json({ 
+        error: 'Supabase Client nicht verfügbar',
+        debug: {
+          hasSupabaseUrl: !!supabaseUrl,
+          hasSupabaseKey: !!supabaseKey
+        }
+      });
+    }
+
     const { 
       organizationName, 
       organizationSlug, 
@@ -56,8 +100,18 @@ router.post('/register', async (req, res) => {
       adminPassword 
     } = req.body;
 
+    console.log('🔍 Validierung der Eingabedaten:', {
+      organizationName: !!organizationName,
+      organizationSlug: !!organizationSlug,
+      adminEmail: !!adminEmail,
+      adminName: !!adminName,
+      adminPassword: !!adminPassword,
+      passwordLength: adminPassword ? adminPassword.length : 0
+    });
+
     // Validierung
     if (!organizationName || !organizationSlug || !adminEmail || !adminName || !adminPassword) {
+      console.log('❌ Validierung fehlgeschlagen - fehlende Felder');
       return res.status(400).json({ 
         error: 'Alle Felder sind erforderlich',
         missing: {
@@ -71,39 +125,52 @@ router.post('/register', async (req, res) => {
     }
 
     if (adminPassword.length < 6) {
+      console.log('❌ Passwort zu kurz:', adminPassword.length);
       return res.status(400).json({ 
         error: 'Passwort muss mindestens 6 Zeichen lang sein' 
       });
     }
 
+    console.log('✅ Validierung erfolgreich');
+
     // Prüfe ob Workspace-Slug bereits existiert
+    console.log('🔍 Prüfe Workspace-Slug:', organizationSlug);
     const { data: existingOrg, error: orgCheckError } = await supabase
       .from('organizations')
       .select('id')
       .eq('slug', organizationSlug)
       .single();
 
+    console.log('🔍 Workspace-Slug Prüfung Ergebnis:', { existingOrg, orgCheckError });
+
     if (existingOrg) {
+      console.log('❌ Workspace-Slug bereits vergeben');
       return res.status(400).json({ 
         error: 'Workspace-Slug bereits vergeben' 
       });
     }
 
     // Prüfe ob Admin-E-Mail bereits existiert
+    console.log('🔍 Prüfe Admin-E-Mail:', adminEmail);
     const { data: existingPerson, error: personCheckError } = await supabase
       .from('person')
       .select('id')
       .eq('email', adminEmail.toLowerCase())
       .single();
 
+    console.log('🔍 Admin-E-Mail Prüfung Ergebnis:', { existingPerson, personCheckError });
+
     if (existingPerson) {
+      console.log('❌ Admin-E-Mail bereits vergeben');
       return res.status(400).json({ 
         error: 'E-Mail-Adresse bereits vergeben' 
       });
     }
 
     // Passwort hashen
+    console.log('🔐 Hashe Passwort...');
     const passwordHash = await bcrypt.hash(adminPassword, 12);
+    console.log('✅ Passwort gehasht');
 
     // 1. Organization erstellen
     console.log('🏢 Erstelle Organization:', { name: organizationName, slug: organizationSlug });
@@ -117,6 +184,8 @@ router.post('/register', async (req, res) => {
       }])
       .select()
       .single();
+
+    console.log('🔍 Organization Erstellung Ergebnis:', { organization, orgError });
 
     if (orgError) {
       console.error('❌ Fehler beim Erstellen der Organization:', orgError);
@@ -142,6 +211,8 @@ router.post('/register', async (req, res) => {
       .select()
       .single();
 
+    console.log('🔍 Admin-Person Erstellung Ergebnis:', { person, personError });
+
     if (personError) {
       console.error('❌ Fehler beim Erstellen der Admin-Person:', personError);
       return res.status(500).json({ 
@@ -165,6 +236,8 @@ router.post('/register', async (req, res) => {
       .select()
       .single();
 
+    console.log('🔍 Admin-Benutzer Erstellung Ergebnis:', { user, userError });
+
     if (userError) {
       console.error('❌ Fehler beim Erstellen des Admin-Benutzers:', userError);
       return res.status(500).json({ 
@@ -184,6 +257,8 @@ router.post('/register', async (req, res) => {
         .select('id')
         .eq('value', 'admin')
         .single();
+
+      console.log('🔍 Admin-Rolle Abfrage Ergebnis:', { roleData, roleQueryError });
 
       if (roleData && !roleQueryError) {
         const { error: roleError } = await supabase
@@ -227,7 +302,7 @@ router.post('/register', async (req, res) => {
       userId: user.id
     });
 
-    res.status(201).json({
+    const response = {
       message: 'Workspace erfolgreich registriert!',
       organization: {
         id: organization.id,
@@ -241,13 +316,18 @@ router.post('/register', async (req, res) => {
         username: user.username,
         email: adminEmail
       }
-    });
+    };
+
+    console.log('📤 Sende Erfolgs-Antwort:', response);
+    res.status(201).json(response);
 
   } catch (err) {
     console.error('❌ Fehler bei der Workspace-Registrierung:', err);
+    console.error('❌ Fehler-Stack:', err.stack);
     res.status(500).json({ 
       error: 'Serverfehler bei der Registrierung',
-      details: err.message
+      details: err.message,
+      stack: err.stack
     });
   }
 });
@@ -258,4 +338,8 @@ router.post('/register', async (req, res) => {
 
 app.use('/.netlify/functions/organization', router);
 
+console.log('✅ Routes konfiguriert');
+
 module.exports.handler = serverless(app);
+
+console.log('✅ Organization.js Handler exportiert');
