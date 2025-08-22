@@ -169,6 +169,146 @@ const ForgotPassword = ({ onBack, onSuccess }) => {
   );
 };
 
+// Reset Password Komponente
+const ResetPassword = ({ token, onSuccess, onError }) => {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwörter stimmen nicht überein');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('Passwort muss mindestens 6 Zeichen lang sein');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const apiUrl = import.meta.env.DEV 
+        ? 'http://localhost:8888/.netlify/functions/auth/reset-password'
+        : '/.netlify/functions/auth/reset-password';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          token: token, 
+          newPassword: newPassword 
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(data);
+        if (onSuccess) {
+          onSuccess(data);
+        }
+      } else {
+        setError(data.error || 'Fehler beim Zurücksetzen des Passworts');
+      }
+    } catch (err) {
+      setError('Netzwerkfehler: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="reset-password">
+        <div className="success-message">
+          <h3>🎉 Passwort erfolgreich zurückgesetzt!</h3>
+          <p>{success.message}</p>
+          
+          <div style={{ marginTop: '20px' }}>
+            <button 
+              className="submit-button" 
+              onClick={() => window.location.href = '/'}
+            >
+              Zum Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="reset-password">
+      <div className="reset-header">
+        <h1>🔐 Passwort zurücksetzen</h1>
+        <p>Gib dein neues Passwort ein</p>
+      </div>
+
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="newPassword">Neues Passwort *</label>
+          <input
+            type="password"
+            id="newPassword"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Mindestens 6 Zeichen"
+            required
+            minLength="6"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="confirmPassword">Passwort bestätigen *</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Passwort wiederholen"
+            required
+            minLength="6"
+          />
+        </div>
+
+        <div className="form-actions">
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Setze zurück...' : 'Passwort zurücksetzen'}
+          </button>
+        </div>
+      </form>
+
+      <div className="reset-info">
+        <h3>ℹ️ Sicherheitshinweise</h3>
+        <ul>
+          <li>Verwende ein sicheres Passwort (mindestens 6 Zeichen)</li>
+          <li>Das Passwort wird verschlüsselt gespeichert</li>
+          <li>Du kannst dich sofort mit dem neuen Passwort anmelden</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
 function App() {
   // Build-Informationen (wird bei jedem Build aktualisiert)
   const getBuildInfoString = () => {
@@ -186,6 +326,8 @@ function App() {
   const [error, setError] = useState(null)
   const [showOrganizationRegister, setShowOrganizationRegister] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [showResetPassword, setShowResetPassword] = useState(false)
+  const [resetToken, setResetToken] = useState(null)
 
   // Form states
   const [showPersonForm, setShowPersonForm] = useState(false)
@@ -205,6 +347,17 @@ function App() {
   useEffect(() => {
     checkAuth()
   }, [])
+
+  useEffect(() => {
+    // Prüfe ob wir auf der Reset-Password-Seite sind
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get('token');
+    
+    if (resetToken && window.location.pathname === '/reset-password') {
+      setShowResetPassword(true);
+      setResetToken(resetToken);
+    }
+  }, []);
 
   const checkAuth = async () => {
     const token = localStorage.getItem('authToken')
@@ -1308,6 +1461,21 @@ function App() {
           </div>
         </div>
       )} */}
+
+      {showResetPassword && (
+        <div className="reset-password-container">
+          <ResetPassword 
+            token={resetToken}
+            onSuccess={(data) => {
+              console.log('Passwort erfolgreich zurückgesetzt:', data);
+              // Optional: Weiterleitung zum Login
+            }}
+            onError={(error) => {
+              console.error('Fehler beim Zurücksetzen:', error);
+            }}
+          />
+        </div>
+      )}
 
       <footer>
         <p>

@@ -79,7 +79,13 @@
   to = "/api-spec.json"
   status = 200
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  # Reset-Password Route
+  [[redirects]]
+    from = "/reset-password"
+    to = "/index.html"
+    status = 200
+
+  [[redirects]]
+    from = "/*"
+    to = "/index.html"
+    status = 200

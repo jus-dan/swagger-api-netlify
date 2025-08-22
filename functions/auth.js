@@ -651,11 +651,22 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(500).json({ error: 'Fehler beim Verarbeiten der Anfrage' });
     }
 
-    // E-Mail mit Reset-Link senden
-    const resetUrl = `${req.headers.origin}/reset-password?token=${resetToken}`;
+    // E-Mail mit Reset-Link senden - korrekte URL für Online-Umgebung
+    let resetUrl;
+    if (process.env.URL) {
+      // Netlify-Produktion
+      resetUrl = `${process.env.URL}/reset-password?token=${resetToken}`;
+    } else if (req.headers.origin) {
+      // Lokale Entwicklung
+      resetUrl = `${req.headers.origin}/reset-password?token=${resetToken}`;
+    } else {
+      // Fallback
+      resetUrl = `https://your-site.netlify.app/reset-password?token=${resetToken}`;
+    }
     
     console.log('🔐 Passwort-Reset angefordert für:', email);
     console.log('🔗 Reset-URL:', resetUrl);
+    console.log('🌐 Environment:', process.env.URL ? 'Netlify' : 'Local');
 
     // Vereinfachte Logik: Immer Entwicklungsmodus für den Moment
     console.log('🔧 Entwicklungsmodus - zeige Reset-Link direkt an');
