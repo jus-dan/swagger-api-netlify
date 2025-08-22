@@ -184,6 +184,28 @@ CREATE INDEX IF NOT EXISTS idx_organization_slug ON organizations(slug);
 -- (This will be handled by the migration script)
 
 -- ========================================
+-- PASSWORD RESET TABLE
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS password_resets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    used_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+);
+
+-- Index für schnelle Token-Suche
+CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
+CREATE INDEX IF NOT EXISTS idx_password_resets_user_id ON password_resets(user_id);
+CREATE INDEX IF NOT EXISTS idx_password_resets_expires_at ON password_resets(expires_at);
+
+-- Trigger für updated_at
+CREATE TRIGGER IF NOT EXISTS update_password_resets_updated_at BEFORE UPDATE ON password_resets
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ========================================
 -- EXISTING DATA INSERTIONS
 -- ========================================
 

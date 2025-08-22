@@ -579,6 +579,170 @@ router.put('/permissions', authenticateToken, requireRole(['admin']), async (req
   }
 });
 
+// ========================================
+// PASSWORD RESET
+// ========================================
+
+// Passwort vergessen - sendet Reset-Link per E-Mail
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'E-Mail-Adresse ist erforderlich' });
+    }
+
+    // E-Mail-Validierung
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Ungültige E-Mail-Adresse' });
+    }
+
+    // Prüfe ob Benutzer existiert
+    const { data: person, error: personError } = await supabase
+      .from('person')
+      .select('id, email, name')
+      .eq('email', email)
+      .single();
+
+    if (personError || !person) {
+      // Aus Sicherheitsgründen geben wir keine Information darüber, ob die E-Mail existiert
+      return res.status(200).json({ 
+        message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.' 
+      });
+    }
+
+    // Prüfe ob User existiert
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('person_id', person.id)
+      .single();
+
+    if (userError || !user) {
+      return res.status(200).json({ 
+        message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.' 
+      });
+    }
+
+    // Generiere Reset-Token (24 Stunden gültig)
+    const resetToken = jwt.sign(
+      { 
+        userId: user.id, 
+        email: person.email,
+        type: 'password_reset'
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Speichere Reset-Token in der Datenbank
+    const { error: tokenError } = await supabase
+      .from('password_resets')
+      .insert({
+        user_id: user.id,
+        token: resetToken,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      });
+
+    if (tokenError) {
+      console.error('Fehler beim Speichern des Reset-Tokens:', tokenError);
+      return res.status(500).json({ error: 'Fehler beim Verarbeiten der Anfrage' });
+    }
+
+    // TODO: E-Mail mit Reset-Link senden
+    // Für den Moment geben wir den Token zurück (nur für Entwicklung)
+    const resetUrl = `${req.headers.origin}/reset-password?token=${resetToken}`;
+    
+    console.log('🔐 Passwort-Reset angefordert für:', email);
+    console.log('🔗 Reset-URL:', resetUrl);
+
+    res.status(200).json({
+      message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
+      // TODO: Entferne das in Produktion
+      resetUrl: process.env.NODE_ENV === 'development' ? resetUrl : undefined
+    });
+
+  } catch (error) {
+    console.error('❌ Fehler bei Passwort vergessen:', error);
+    res.status(500).json({ error: 'Serverfehler bei der Passwort-Reset-Anfrage' });
+  }
+});
+
+// Passwort zurücksetzen mit Token
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token und neues Passwort sind erforderlich' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Passwort muss mindestens 6 Zeichen lang sein' });
+    }
+
+    // Verifiziere Token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      return res.status(400).json({ error: 'Ungültiger oder abgelaufener Reset-Token' });
+    }
+
+    if (decoded.type !== 'password_reset') {
+      return res.status(400).json({ error: 'Ungültiger Token-Typ' });
+    }
+
+    // Prüfe ob Token in der Datenbank existiert und gültig ist
+    const { data: resetRecord, error: resetError } = await supabase
+      .from('password_resets')
+      .select('*')
+      .eq('token', token)
+      .eq('user_id', decoded.userId)
+      .gte('expires_at', new Date().toISOString())
+      .single();
+
+    if (resetError || !resetRecord) {
+      return res.status(400).json({ error: 'Ungültiger oder abgelaufener Reset-Token' });
+    }
+
+    // Hash neues Passwort
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Aktualisiere Passwort
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ password: hashedPassword })
+      .eq('id', decoded.userId);
+
+    if (updateError) {
+      console.error('Fehler beim Aktualisieren des Passworts:', updateError);
+      return res.status(500).json({ error: 'Fehler beim Zurücksetzen des Passworts' });
+    }
+
+    // Lösche verwendeten Reset-Token
+    await supabase
+      .from('password_resets')
+      .delete()
+      .eq('token', token);
+
+    console.log('✅ Passwort erfolgreich zurückgesetzt für User:', decoded.userId);
+
+    res.status(200).json({
+      message: 'Passwort wurde erfolgreich zurückgesetzt. Du kannst dich jetzt mit dem neuen Passwort anmelden.'
+    });
+
+  } catch (error) {
+    console.error('❌ Fehler beim Passwort zurücksetzen:', error);
+    res.status(500).json({ error: 'Serverfehler beim Zurücksetzen des Passworts' });
+  }
+});
+
+// ========================================
+// ROUTES SETUP
+// ========================================
+
 // Router zuerst einhängen (wichtig für die Reihenfolge!)
 app.use('/.netlify/functions/auth', router);
 

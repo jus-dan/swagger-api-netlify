@@ -2,6 +2,129 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import OrganizationRegister from './OrganizationRegister'
 
+// Passwort vergessen Komponente
+const ForgotPassword = ({ onBack, onSuccess }) => {
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const apiUrl = import.meta.env.DEV 
+        ? 'http://localhost:8888/.netlify/functions/auth/forgot-password'
+        : '/.netlify/functions/auth/forgot-password';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(data);
+        if (onSuccess) {
+          onSuccess(data);
+        }
+      } else {
+        setError(data.error || 'Fehler bei der Anfrage');
+      }
+    } catch (err) {
+      setError('Netzwerkfehler: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="forgot-password">
+        <div className="success-message">
+          <h3>📧 E-Mail gesendet!</h3>
+          <p>{success.message}</p>
+          
+          {success.resetUrl && (
+            <div className="dev-info">
+              <h4>🔧 Entwicklungsmodus:</h4>
+              <p>Reset-Link: <a href={success.resetUrl} target="_blank" rel="noopener noreferrer">{success.resetUrl}</a></p>
+            </div>
+          )}
+
+          <div style={{ marginTop: '20px' }}>
+            <button 
+              className="submit-button" 
+              onClick={() => onBack()}
+            >
+              Zurück zum Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="forgot-password">
+      <div className="forgot-header">
+        <button className="back-button" onClick={onBack}>
+          ← Zurück
+        </button>
+        <h1>🔐 Passwort vergessen</h1>
+        <p>Gib deine E-Mail-Adresse ein, um dein Passwort zurückzusetzen</p>
+      </div>
+
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="email">E-Mail-Adresse *</label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="deine@email.de"
+            required
+          />
+        </div>
+
+        <div className="form-actions">
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Sende...' : 'Passwort zurücksetzen'}
+          </button>
+        </div>
+      </form>
+
+      <div className="forgot-info">
+        <h3>ℹ️ Wie funktioniert das?</h3>
+        <ol>
+          <li>Gib deine E-Mail-Adresse ein</li>
+          <li>Du erhältst einen Reset-Link per E-Mail</li>
+          <li>Klicke auf den Link und setze ein neues Passwort</li>
+          <li>Melde dich mit dem neuen Passwort an</li>
+        </ol>
+        <p><strong>Hinweis:</strong> Der Link ist 24 Stunden gültig.</p>
+      </div>
+    </div>
+  );
+};
+
 function App() {
   // Build-Informationen (wird bei jedem Build aktualisiert)
   const getBuildInfoString = () => {
@@ -18,6 +141,7 @@ function App() {
   const [permissions, setPermissions] = useState({})
   const [error, setError] = useState(null)
   const [showOrganizationRegister, setShowOrganizationRegister] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
 
   // Form states
   const [showPersonForm, setShowPersonForm] = useState(false)
@@ -501,6 +625,19 @@ function App() {
       );
     }
 
+    if (showForgotPassword) {
+      return (
+        <div className="app">
+          <ForgotPassword 
+            onBack={() => setShowForgotPassword(false)}
+            onSuccess={(data) => {
+              console.log('Passwort-Reset angefordert:', data);
+            }}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="app">
         <div className="login-container">
@@ -519,6 +656,22 @@ function App() {
           </form>
           
           <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <button 
+              onClick={() => setShowForgotPassword(true)}
+              className="link-button"
+              style={{ 
+                background: 'none',
+                border: 'none',
+                color: '#3498db',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontSize: '0.9em',
+                marginBottom: '15px'
+              }}
+            >
+              Passwort vergessen?
+            </button>
+            
             <p style={{ color: '#7f8c8d', marginBottom: '15px' }}>
               Noch keinen Makerspace? Erstelle deine eigene Instanz!
             </p>
