@@ -608,9 +608,24 @@ router.post('/forgot-password', async (req, res) => {
 
     if (personError || !person) {
       // Aus Sicherheitsgründen geben wir keine Information darüber, ob die E-Mail existiert
-      return res.status(200).json({ 
-        message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.' 
-      });
+      console.log('🔍 Benutzer nicht gefunden für E-Mail:', email);
+      
+      const response = {
+        message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
+        emailSent: false,
+        mode: 'development',
+        resetUrl: null,
+        note: 'Benutzer nicht gefunden (Sicherheitsgründen)',
+        debug: {
+          hasSendGridKey: !!process.env.SENDGRID_API_KEY,
+          hasFromEmail: !!process.env.SENDGRID_FROM_EMAIL,
+          nodeEnv: process.env.NODE_ENV,
+          userFound: false
+        }
+      };
+      
+      console.log('📤 Sende Antwort (Benutzer nicht gefunden):', JSON.stringify(response, null, 2));
+      return res.status(200).json(response);
     }
 
     // Prüfe ob User existiert
@@ -621,9 +636,24 @@ router.post('/forgot-password', async (req, res) => {
       .single();
 
     if (userError || !user) {
-      return res.status(200).json({ 
-        message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.' 
-      });
+      console.log('🔍 User-Account nicht gefunden für Person:', person.id);
+      
+      const response = {
+        message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
+        emailSent: false,
+        mode: 'development',
+        resetUrl: null,
+        note: 'User-Account nicht gefunden (Sicherheitsgründen)',
+        debug: {
+          hasSendGridKey: !!process.env.SENDGRID_API_KEY,
+          hasFromEmail: !!process.env.SENDGRID_FROM_EMAIL,
+          nodeEnv: process.env.NODE_ENV,
+          userFound: false
+        }
+      };
+      
+      console.log('📤 Sende Antwort (User-Account nicht gefunden):', JSON.stringify(response, null, 2));
+      return res.status(200).json(response);
     }
 
     // Generiere Reset-Token (24 Stunden gültig)
@@ -680,11 +710,14 @@ router.post('/forgot-password', async (req, res) => {
       debug: {
         hasSendGridKey: !!process.env.SENDGRID_API_KEY,
         hasFromEmail: !!process.env.SENDGRID_FROM_EMAIL,
-        nodeEnv: process.env.NODE_ENV
+        nodeEnv: process.env.NODE_ENV,
+        userFound: true,
+        userId: user.id,
+        personId: person.id
       }
     };
     
-    console.log('📤 Sende Antwort:', JSON.stringify(response, null, 2));
+    console.log('📤 Sende Antwort (Erfolgreich):', JSON.stringify(response, null, 2));
     
     res.status(200).json(response);
 
