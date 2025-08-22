@@ -1,12 +1,13 @@
 [build]
-  command = "npm run update-build && npm run build"
+  command = "npm install && npm run update-build && npm run build"
   publish = "frontend/dist"
   functions = "functions"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "18.20"
 
 [functions]
+  directory = "functions"
   node_bundler = "esbuild"
 
 [[redirects]]
