@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import OrganizationRegister from './OrganizationRegister'
+import { getBuildInfoString, getDetailedBuildInfo } from '../build-info.js'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -534,6 +535,15 @@ function App() {
               ⏰ Neuen BenchTime-Workspace registrieren
             </button>
           </div>
+          
+          {/* Footer auch beim Login anzeigen */}
+          <footer style={{ marginTop: '40px' }}>
+            <div className="version-info">
+              <span>{getBuildInfoString()}</span>
+              <span>Build: {new Date().toISOString().split('T')[0]}</span>
+              <span>BenchTime © 2024</span>
+            </div>
+          </footer>
         </div>
       </div>
     )
@@ -1105,7 +1115,7 @@ function App() {
           ⚙️ <a href="/.netlify/functions/admin/docs" target="_blank">Admin API</a>
         </p>
         <div className="version-info">
-          <span>v1.0.0</span>
+          <span>{getBuildInfoString()}</span>
           <span>Build: {new Date().toISOString().split('T')[0]}</span>
           <span>BenchTime © 2024</span>
         </div>
