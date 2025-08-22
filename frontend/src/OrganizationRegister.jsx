@@ -4,13 +4,8 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
   const [formData, setFormData] = useState({
     organizationName: '',
     organizationSlug: '',
-    adminUsername: '',
-    adminPassword: '',
     adminEmail: '',
-    adminName: '',
-    description: '',
-    website: '',
-    address: ''
+    adminName: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,14 +36,8 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
 
   const validateForm = () => {
     if (!formData.organizationName || !formData.organizationSlug || 
-        !formData.adminUsername || !formData.adminPassword || 
         !formData.adminEmail || !formData.adminName) {
       setError('Alle Pflichtfelder sind erforderlich');
-      return false;
-    }
-
-    if (formData.adminPassword.length < 6) {
-      setError('Passwort muss mindestens 6 Zeichen lang sein');
       return false;
     }
 
@@ -193,39 +182,7 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
             <small>Wird für URLs verwendet. Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.</small>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="description">Beschreibung</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Beschreibe deinen Makerspace, seine Ausstattung und Ziele..."
-            />
-          </div>
 
-          <div className="form-group">
-            <label htmlFor="website">Website</label>
-            <input
-              type="url"
-              id="website"
-              name="website"
-              value={formData.website}
-              onChange={handleInputChange}
-              placeholder="https://www.dein-makerspace.de"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="address">Adresse</label>
-            <textarea
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              placeholder="Straße, Hausnummer, PLZ, Stadt"
-            />
-          </div>
         </div>
 
         {/* Admin Account */}
@@ -256,33 +213,6 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
               placeholder="admin@dein-makerspace.de"
               required
             />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="adminUsername">Benutzername *</label>
-            <input
-              type="text"
-              id="adminUsername"
-              name="adminUsername"
-              value={formData.adminUsername}
-              onChange={handleInputChange}
-              placeholder="admin, verwalter, etc."
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="adminPassword">Passwort *</label>
-            <input
-              type="password"
-              id="adminPassword"
-              name="adminPassword"
-              value={formData.adminPassword}
-              onChange={handleInputChange}
-              placeholder="Mindestens 6 Zeichen"
-              required
-            />
-            <small>Das Passwort wird sicher gehashed und gespeichert.</small>
           </div>
         </div>
 
