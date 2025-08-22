@@ -216,16 +216,16 @@ router.post('/register', async (req, res) => {
     // 2. Admin-Person erstellen
     console.log('👤 Erstelle Admin-Person:', { name: adminName, email: adminEmail });
     
-    const { data: person, error: personError } = await supabase
-      .from('person')
-      .insert([{
-        name: adminName.trim(),
-        email: adminEmail.toLowerCase(),
-        roles: 'admin',
-        organization_id: organization.id
-      }])
-      .select()
-      .single();
+         const { data: person, error: personError } = await supabase
+       .from('person')
+       .insert([{
+         name: adminName.trim(),
+         email: adminEmail.toLowerCase(),
+         roles: ['admin'], // Als Array senden
+         organization_id: organization.id
+       }])
+       .select()
+       .single();
 
     console.log('🔍 Admin-Person Erstellung Ergebnis:', { person, personError });
 
