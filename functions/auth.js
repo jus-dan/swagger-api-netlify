@@ -340,8 +340,7 @@ router.post('/register', async (req, res) => {
       .from('person')
       .insert([{ 
         name: name.trim(), 
-        email: email.toLowerCase(), 
-        roles: ['user'] 
+        email: email.toLowerCase()
       }])
       .select()
       .single();
@@ -356,7 +355,7 @@ router.post('/register', async (req, res) => {
       .insert([{
         person_id: person.id,
         username: username.trim(),
-        password_hash: passwordHash
+        password: passwordHash
       }])
       .select()
       .single();
@@ -366,25 +365,44 @@ router.post('/register', async (req, res) => {
     }
 
     // Standard-Rolle 'user' zuweisen
-    const { data: userRole, error: roleError } = await supabase
-      .from('user_roles')
-      .insert([{
-        user_id: user.id,
-        role_id: (await supabase.from('roles').select('id').eq('name', 'user').single()).data.id
-      }])
-      .select()
-      .single();
+    try {
+      const { data: roleData, error: roleQueryError } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('value', 'user')
+        .single();
 
-    if (roleError) {
-      console.warn('Warnung: Fehler beim Zuweisen der Standard-Rolle:', roleError);
+      if (roleData && !roleQueryError) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert([{
+            user_id: user.id,
+            role_id: roleData.id
+          }]);
+
+        if (roleError) {
+          console.warn('Warnung: Fehler beim Zuweisen der Standard-Rolle:', roleError);
+        }
+      } else {
+        console.warn('Warnung: Standard-Rolle "user" nicht gefunden');
+      }
+    } catch (roleErr) {
+      console.warn('Warnung: Fehler bei der Rollen-Zuweisung:', roleErr);
     }
+
+    console.log('✅ Benutzer erfolgreich registriert:', {
+      userId: user.id,
+      personId: person.id,
+      username: username,
+      email: email
+    });
 
     res.status(201).json({
       message: 'Benutzer erfolgreich registriert',
       user: {
         id: user.id,
         username: user.username,
-        email: user.email,
+        email: person.email,
         person: person
       }
     });
