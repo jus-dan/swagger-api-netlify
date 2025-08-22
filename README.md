@@ -1,6 +1,6 @@
-# 🏭 Makerspace Verwaltung - Vollständiges System mit Login und Rollen
+# ⏰ BenchTime - Werkstatt-Management System
 
-Ein vollständiges Verwaltungssystem für Makerspaces mit Benutzer-Authentifizierung, rollenbasierten Berechtigungen und umfassendem Admin-Interface.
+Ein vollständiges Verwaltungssystem für Werkstätten mit Benutzer-Authentifizierung, rollenbasierten Berechtigungen und umfassendem Admin-Interface.
 
 ## 🚀 Features
 

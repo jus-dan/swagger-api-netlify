@@ -107,8 +107,8 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
     return (
       <div className="organization-register">
         <div className="success-message">
-          <h3>🎉 Makerspace erfolgreich registriert!</h3>
-          <p>Willkommen bei der Makerspace-Verwaltungsplattform!</p>
+          <h3>🎉 BenchTime-Workspace erfolgreich registriert!</h3>
+          <p>Willkommen bei der BenchTime-Werkstatt-Verwaltungsplattform!</p>
           
           <div className="next-steps">
             <h4>Nächste Schritte:</h4>
@@ -132,7 +132,7 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
               onClick={() => window.location.reload()}
               style={{ background: 'linear-gradient(135deg, #27ae60, #2ecc71)' }}
             >
-              Neuen Makerspace registrieren
+              Neuen BenchTime-Workspace registrieren
             </button>
           </div>
         </div>
@@ -146,8 +146,8 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
         <button className="back-button" onClick={onBack}>
           ← Zurück
         </button>
-        <h1>🏭 Neuen Makerspace registrieren</h1>
-        <p>Erstelle deine eigene Makerspace-Instanz und verwalte deine Ressourcen</p>
+        <h1>⏰ Neuen BenchTime-Workspace registrieren</h1>
+        <p>Erstelle deine eigene Werkstatt-Instanz und verwalte deine Ressourcen</p>
       </div>
 
       {error && (

@@ -499,7 +499,7 @@ function App() {
     return (
       <div className="app">
         <div className="login-container">
-          <h1>🏭 Makerspace Verwaltung</h1>
+          <h1>⏰ BenchTime</h1>
           <form onSubmit={handleLogin} className="login-form">
             <h2>Anmelden</h2>
             <div className="form-group">
@@ -531,7 +531,7 @@ function App() {
                 fontWeight: '600'
               }}
             >
-              🏭 Neuen Makerspace registrieren
+              ⏰ Neuen BenchTime-Workspace registrieren
             </button>
           </div>
         </div>
@@ -542,7 +542,7 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>🏭 Makerspace Verwaltung</h1>
+        <h1>⏰ BenchTime</h1>
         <div className="user-info">
           <span>Willkommen, {user.person?.name || user.username}!</span>
           <button onClick={handleLogout} className="btn-secondary">Abmelden</button>
