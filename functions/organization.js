@@ -19,6 +19,14 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
+// Validate environment variables
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('❌ Fehlende Umgebungsvariablen:', {
+    SUPABASE_URL: SUPABASE_URL ? 'gesetzt' : 'fehlt',
+    SUPABASE_ANON_KEY: SUPABASE_ANON_KEY ? 'gesetzt' : 'fehlt'
+  });
+}
+
 // Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -168,6 +176,14 @@ const requireAdmin = async (req, res, next) => {
  */
 router.post('/register', async (req, res) => {
   try {
+    // Überprüfe Umgebungsvariablen
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.error('❌ Fehlende Umgebungsvariablen beim Registrieren');
+      return res.status(500).json({ 
+        error: 'Server-Konfigurationsfehler - bitte kontaktiere den Administrator' 
+      });
+    }
+
     const {
       organizationName,
       organizationSlug,
