@@ -579,7 +579,10 @@ router.put('/permissions', authenticateToken, requireRole(['admin']), async (req
   }
 });
 
-// Swagger-Doku
+// Router zuerst einhängen (wichtig für die Reihenfolge!)
+app.use('/.netlify/functions/auth', router);
+
+// Swagger-Doku danach
 app.use('/.netlify/functions/auth/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "Makerspace API - Authentication"
@@ -589,7 +592,5 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "Makerspace API - Authentication"
 }));
-
-app.use('/.netlify/functions/auth', router);
 
 module.exports.handler = serverless(app);
