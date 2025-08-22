@@ -50,6 +50,11 @@
   status = 200
 
 [[redirects]]
+  from = "/organization/docs"
+  to = "/.netlify/functions/organization/docs"
+  status = 200
+
+[[redirects]]
   from = "/docs"
   to = "/.netlify/functions/swagger"
   status = 200

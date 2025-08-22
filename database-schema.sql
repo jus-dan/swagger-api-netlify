@@ -112,6 +112,81 @@ CREATE TABLE IF NOT EXISTS maintenance_log (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- ========================================
+-- MULTI-TENANT ORGANIZATION SUPPORT
+-- ========================================
+
+-- Organizations table (Makerspaces)
+CREATE TABLE IF NOT EXISTS organizations (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL, -- unique identifier for URL routing
+    description TEXT,
+    contact_email VARCHAR(255),
+    website VARCHAR(255),
+    address TEXT,
+    phone VARCHAR(50),
+    logo_url VARCHAR(500),
+    subscription_plan VARCHAR(50) DEFAULT 'free', -- free, basic, premium, enterprise
+    max_users INTEGER DEFAULT 10,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Organization settings
+CREATE TABLE IF NOT EXISTS organization_settings (
+    id SERIAL PRIMARY KEY,
+    organization_id INTEGER REFERENCES organizations(id) ON DELETE CASCADE,
+    setting_key VARCHAR(100) NOT NULL,
+    setting_value TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(organization_id, setting_key)
+);
+
+-- Extend existing tables with organization_id
+ALTER TABLE person ADD COLUMN IF NOT EXISTS organization_id INTEGER REFERENCES organizations(id) ON DELETE CASCADE;
+ALTER TABLE resource ADD COLUMN IF NOT EXISTS organization_id INTEGER REFERENCES organizations(id) ON DELETE CASCADE;
+ALTER TABLE resource_category ADD COLUMN IF NOT EXISTS organization_id INTEGER REFERENCES organizations(id) ON DELETE CASCADE;
+
+-- Organization admins (super users who can manage the organization)
+CREATE TABLE IF NOT EXISTS organization_admins (
+    id SERIAL PRIMARY KEY,
+    organization_id INTEGER REFERENCES organizations(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    role VARCHAR(50) DEFAULT 'admin', -- owner, admin, manager
+    permissions JSONB DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(organization_id, user_id)
+);
+
+-- Organization invitations for new users
+CREATE TABLE IF NOT EXISTS organization_invitations (
+    id SERIAL PRIMARY KEY,
+    organization_id INTEGER REFERENCES organizations(id) ON DELETE CASCADE,
+    email VARCHAR(255) NOT NULL,
+    invited_by INTEGER REFERENCES users(id),
+    role VARCHAR(50) DEFAULT 'user',
+    invitation_token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    accepted_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_person_organization ON person(organization_id);
+CREATE INDEX IF NOT EXISTS idx_resource_organization ON resource(organization_id);
+CREATE INDEX IF NOT EXISTS idx_resource_category_organization ON resource_category(organization_id);
+CREATE INDEX IF NOT EXISTS idx_organization_slug ON organizations(slug);
+
+-- Update existing tables to set default organization for existing data
+-- (This will be handled by the migration script)
+
+-- ========================================
+-- EXISTING DATA INSERTIONS
+-- ========================================
+
 -- Standard-Rollen einfügen
 INSERT INTO roles (name, description, is_system_role) VALUES
 ('admin', 'Vollzugriff auf alle Funktionen', true),

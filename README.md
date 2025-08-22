@@ -4,6 +4,14 @@ Ein vollständiges Verwaltungssystem für Makerspaces mit Benutzer-Authentifizie
 
 ## 🚀 Features
 
+### 🏢 **Multi-Tenant Organisationen**
+- **Eigene Makerspace-Instanz** für jeden Kunden
+- **Isolierte Daten** pro Organisation
+- **Organisations-Registrierung** über öffentliche API
+- **Admin-Panel** pro Organisation
+- **Benutzer-Einladungssystem** für neue Mitglieder
+- **Skalierbare Architektur** für kommerzielle Nutzung
+
 ### 🔐 Authentifizierung & Sicherheit
 - **Benutzer-Login/Logout** mit JWT-Token
 - **Registrierung** neuer Benutzer
@@ -85,6 +93,13 @@ Falls du bereits eine bestehende Datenbank mit doppelten E-Mail-Spalten hast:
 # migration-remove-email-from-users.sql
 ```
 
+### 6. Multi-Tenant Support hinzufügen (optional)
+Falls du Multi-Tenant-Organisationsunterstützung benötigst:
+```bash
+# Führe das Organisations-Migrationsskript aus:
+# migration-add-organization-support.sql
+```
+
 ### 5. Entwicklungsserver starten
 ```bash
 npm run dev
@@ -138,6 +153,14 @@ npm run dev
 - `GET /auth/roles` - Alle verfügbaren Rollen
 - `GET /auth/permissions` - Berechtigungen für eine Rolle
 - `PUT /auth/permissions` - Berechtigungen aktualisieren
+
+### 🏢 Organisationen (Multi-Tenant)
+- `POST /organization/register` - Neuen Makerspace registrieren (öffentlich)
+- `GET /organization/profile` - Organisations-Profil abrufen
+- `PUT /organization/profile` - Organisations-Profil aktualisieren
+- `POST /organization/invite` - Benutzer zur Organisation einladen
+- `GET /organization/public/:slug` - Öffentliche Organisations-Informationen
+- `GET /organization/admin/organizations` - Alle Organisationen (Super Admin)
 
 ### ⚙️ Admin-Funktionen
 - `GET /admin/roles` - Alle Rollen mit Berechtigungen

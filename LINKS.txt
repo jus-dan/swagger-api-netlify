@@ -30,6 +30,7 @@ Lokal:
 ✅ Person API: http://localhost:8888/.netlify/functions/person
 ✅ Auth API: http://localhost:8888/.netlify/functions/auth
 ✅ Admin API: http://localhost:8888/.netlify/functions/admin
+✅ Organization API: http://localhost:8888/.netlify/functions/organization
 
 
 Production (Netlify):
@@ -38,6 +39,7 @@ Production (Netlify):
 ✅ Person API: https://radiant-maamoul-fab9c6.netlify.app/.netlify/functions/person
 ✅ Auth API: https://radiant-maamoul-fab9c6.netlify.app/.netlify/functions/auth
 ✅ Admin API: https://radiant-maamoul-fab9c6.netlify.app/.netlify/functions/admin
+✅ Organization API: https://radiant-maamoul-fab9c6.netlify.app/.netlify/functions/organization
 
 
 Commands:

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import OrganizationRegister from './OrganizationRegister'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -11,6 +12,7 @@ function App() {
   const [roles, setRoles] = useState([])
   const [permissions, setPermissions] = useState({})
   const [error, setError] = useState(null)
+  const [showOrganizationRegister, setShowOrganizationRegister] = useState(false)
 
   // Form states
   const [showPersonForm, setShowPersonForm] = useState(false)
@@ -480,6 +482,20 @@ function App() {
   }
 
   if (!user) {
+    if (showOrganizationRegister) {
+      return (
+        <div className="app">
+          <OrganizationRegister 
+            onBack={() => setShowOrganizationRegister(false)}
+            onSuccess={(data) => {
+              setShowOrganizationRegister(false);
+              // Optional: Zeige Erfolgsmeldung
+            }}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="app">
         <div className="login-container">
@@ -496,6 +512,28 @@ function App() {
             </div>
             <button type="submit" className="btn-primary">Anmelden</button>
           </form>
+          
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <p style={{ color: '#7f8c8d', marginBottom: '15px' }}>
+              Noch keinen Makerspace? Erstelle deine eigene Instanz!
+            </p>
+            <button 
+              onClick={() => setShowOrganizationRegister(true)}
+              className="btn-secondary"
+              style={{ 
+                background: 'linear-gradient(135deg, #27ae60, #2ecc71)',
+                border: 'none',
+                color: 'white',
+                padding: '12px 24px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '1em',
+                fontWeight: '600'
+              }}
+            >
+              🏭 Neuen Makerspace registrieren
+            </button>
+          </div>
         </div>
       </div>
     )
