@@ -340,7 +340,8 @@ router.post('/register', async (req, res) => {
       .from('person')
       .insert([{ 
         name: name.trim(), 
-        email: email.toLowerCase()
+        email: email.toLowerCase(),
+        roles: 'user' // Standard-Rolle setzen
       }])
       .select()
       .single();
