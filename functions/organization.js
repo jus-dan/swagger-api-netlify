@@ -242,15 +242,15 @@ router.post('/register', async (req, res) => {
     // 3. Admin-Benutzer erstellen
     console.log('🔐 Erstelle Admin-Benutzer');
     
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .insert([{
-        person_id: person.id,
-        username: adminEmail.toLowerCase().split('@')[0], // Username aus E-Mail
-        password: passwordHash
-      }])
-      .select()
-      .single();
+         const { data: user, error: userError } = await supabase
+       .from('users')
+       .insert([{
+         person_id: person.id,
+         username: adminEmail.toLowerCase().split('@')[0], // Username aus E-Mail
+         password_hash: passwordHash // Korrekter Feldname laut Schema
+       }])
+       .select()
+       .single();
 
     console.log('🔍 Admin-Benutzer Erstellung Ergebnis:', { user, userError });
 
