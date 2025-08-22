@@ -14,11 +14,7 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
+    
     // Auto-generate slug from organization name
     if (name === 'organizationName') {
       const slug = value
@@ -27,16 +23,23 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
         .trim();
+      
       setFormData(prev => ({
         ...prev,
+        [name]: value,
         organizationSlug: slug
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
       }));
     }
   };
 
   // Auto-generate slug when component mounts or organizationName changes
   React.useEffect(() => {
-    if (formData.organizationName && !formData.organizationSlug) {
+    if (formData.organizationName) {
       const slug = formData.organizationName
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
@@ -51,23 +54,20 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
   }, [formData.organizationName]);
 
   const validateForm = () => {
+    console.log('Validating form data:', formData); // Debug-Log
+    
     // Überprüfe alle Pflichtfelder einzeln
-    if (!formData.organizationName) {
+    if (!formData.organizationName || formData.organizationName.trim() === '') {
       setError('Bitte gib den Namen des Makerspaces ein');
       return false;
     }
     
-    if (!formData.organizationSlug) {
-      setError('Der URL-Slug wird automatisch generiert. Bitte gib zuerst den Namen ein.');
-      return false;
-    }
-    
-    if (!formData.adminName) {
+    if (!formData.adminName || formData.adminName.trim() === '') {
       setError('Bitte gib den Namen des Admins ein');
       return false;
     }
     
-    if (!formData.adminEmail) {
+    if (!formData.adminEmail || formData.adminEmail.trim() === '') {
       setError('Bitte gib die E-Mail-Adresse des Admins ein');
       return false;
     }
@@ -79,11 +79,19 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
       return false;
     }
 
-    // Slug-Validierung
-    const slugRegex = /^[a-z0-9-]+$/;
-    if (!slugRegex.test(formData.organizationSlug)) {
-      setError('Der generierte Slug enthält ungültige Zeichen. Bitte überprüfe den Namen.');
-      return false;
+    // Slug wird automatisch generiert, muss nicht validiert werden
+    if (!formData.organizationSlug || formData.organizationSlug.trim() === '') {
+      // Slug automatisch generieren falls noch nicht vorhanden
+      const slug = formData.organizationName
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+      setFormData(prev => ({
+        ...prev,
+        organizationSlug: slug
+      }));
     }
 
     return true;
