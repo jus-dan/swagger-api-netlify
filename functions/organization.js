@@ -267,34 +267,34 @@ router.post('/register', async (req, res) => {
     // 4. Admin-Rolle zuweisen
     console.log('👑 Weise Admin-Rolle zu');
     
-    try {
-      const { data: roleData, error: roleQueryError } = await supabase
-        .from('roles')
-        .select('id')
-        .eq('value', 'admin')
-        .single();
+         try {
+       const { data: roleData, error: roleQueryError } = await supabase
+         .from('roles')
+         .select('id')
+         .eq('name', 'admin') // Korrekter Feldname laut Schema
+         .single();
 
-      console.log('🔍 Admin-Rolle Abfrage Ergebnis:', { roleData, roleQueryError });
+       console.log('🔍 Admin-Rolle Abfrage Ergebnis:', { roleData, roleQueryError });
 
-      if (roleData && !roleQueryError) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert([{
-            user_id: user.id,
-            role_id: roleData.id
-          }]);
+       if (roleData && !roleQueryError) {
+         const { error: roleError } = await supabase
+           .from('user_roles')
+           .insert([{
+             user_id: user.id,
+             role_id: roleData.id
+           }]);
 
-        if (roleError) {
-          console.warn('⚠️ Warnung: Fehler beim Zuweisen der Admin-Rolle:', roleError);
-        } else {
-          console.log('✅ Admin-Rolle zugewiesen');
-        }
-      } else {
-        console.warn('⚠️ Warnung: Admin-Rolle nicht gefunden');
-      }
-    } catch (roleErr) {
-      console.warn('⚠️ Warnung: Fehler bei der Rollen-Zuweisung:', roleErr);
-    }
+         if (roleError) {
+           console.warn('⚠️ Warnung: Fehler beim Zuweisen der Admin-Rolle:', roleError);
+         } else {
+           console.log('✅ Admin-Rolle zugewiesen');
+         }
+       } else {
+         console.warn('⚠️ Warnung: Admin-Rolle nicht gefunden');
+       }
+     } catch (roleErr) {
+       console.warn('⚠️ Warnung: Fehler bei der Rollen-Zuweisung:', roleErr);
+     }
 
     // 5. Organization-Admin verknüpfen
     console.log('🔗 Verknüpfe Organization mit Admin');
