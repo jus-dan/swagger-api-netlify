@@ -600,6 +600,23 @@ footer a:hover {
   text-decoration: underline;
 }
 
+.version-info {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: #adb5bd;
+}
+
+.version-info span {
+  padding: 0.2rem 0.5rem;
+  background: #f8f9fa;
+  border-radius: 3px;
+  border: 1px solid #e9ecef;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   header {

@@ -1104,6 +1104,11 @@ function App() {
           🔐 <a href="/.netlify/functions/auth/docs" target="_blank">Auth API</a> |
           ⚙️ <a href="/.netlify/functions/admin/docs" target="_blank">Admin API</a>
         </p>
+        <div className="version-info">
+          <span>v1.0.0</span>
+          <span>Build: {new Date().toISOString().split('T')[0]}</span>
+          <span>BenchTime © 2024</span>
+        </div>
       </footer>
     </div>
   )
