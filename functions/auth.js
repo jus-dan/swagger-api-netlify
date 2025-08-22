@@ -671,7 +671,7 @@ router.post('/forgot-password', async (req, res) => {
     // Vereinfachte Logik: Immer Entwicklungsmodus für den Moment
     console.log('🔧 Entwicklungsmodus - zeige Reset-Link direkt an');
     
-    res.status(200).json({
+    const response = {
       message: 'Passwort-Reset angefordert (Entwicklungsmodus)',
       emailSent: false,
       mode: 'development',
@@ -682,7 +682,11 @@ router.post('/forgot-password', async (req, res) => {
         hasFromEmail: !!process.env.SENDGRID_FROM_EMAIL,
         nodeEnv: process.env.NODE_ENV
       }
-    });
+    };
+    
+    console.log('📤 Sende Antwort:', JSON.stringify(response, null, 2));
+    
+    res.status(200).json(response);
 
   } catch (error) {
     console.error('❌ Fehler bei Passwort vergessen:', error);

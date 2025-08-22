@@ -28,13 +28,19 @@ const ForgotPassword = ({ onBack, onSuccess }) => {
       });
 
       const data = await response.json();
+      
+      console.log('📥 Backend-Antwort erhalten:', data);
+      console.log('📊 Response Status:', response.status);
+      console.log('📋 Response Headers:', response.headers);
 
       if (response.ok) {
+        console.log('✅ Erfolgreiche Antwort, setze Success State');
         setSuccess(data);
         if (onSuccess) {
           onSuccess(data);
         }
       } else {
+        console.log('❌ Fehler-Antwort:', data);
         setError(data.error || 'Fehler bei der Anfrage');
       }
     } catch (err) {
@@ -55,10 +61,12 @@ const ForgotPassword = ({ onBack, onSuccess }) => {
           <div className="debug-info" style={{ marginTop: '1rem', padding: '1rem', background: '#f8f9fa', borderRadius: '6px', fontSize: '0.8rem' }}>
             <strong>Debug-Info:</strong>
             <pre>{JSON.stringify(success, null, 2)}</pre>
+            <strong>Success State Keys:</strong>
+            <pre>{Object.keys(success || {}).join(', ')}</pre>
           </div>
 
           {/* Hauptanzeige basierend auf dem Modus */}
-          {success.mode === 'development' ? (
+          {success && success.mode === 'development' ? (
             <div className="dev-mode">
               <h4>🔧 Entwicklungsmodus aktiviert</h4>
               <p>{success.note || 'SendGrid ist nicht konfiguriert. Verwende den Link zum Testen.'}</p>
@@ -79,6 +87,26 @@ const ForgotPassword = ({ onBack, onSuccess }) => {
                   </div>
                 </div>
               )}
+            </div>
+          ) : success && success.resetUrl ? (
+            <div className="fallback-mode">
+              <h4>🔧 Fallback-Modus</h4>
+              <p>Reset-Link verfügbar (Modus nicht gesetzt)</p>
+              <div className="reset-link-box">
+                <h5>🔗 Reset-Link zum Testen:</h5>
+                <div className="link-container">
+                  <a href={success.resetUrl} target="_blank" rel="noopener noreferrer" className="reset-link">
+                    {success.resetUrl}
+                  </a>
+                  <button 
+                    onClick={() => navigator.clipboard.writeText(success.resetUrl)}
+                    className="copy-button"
+                    title="Link kopieren"
+                  >
+                    📋
+                  </button>
+                </div>
+              </div>
             </div>
           ) : success.emailSent ? (
             <div className="email-success">
