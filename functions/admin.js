@@ -465,9 +465,8 @@ router.put('/permissions/bulk', authenticateToken, requireAdmin, async (req, res
 
     res.json({
       success: results.length,
-      errors: errors.length,
-      results,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
+      results
     });
 
   } catch (err) {
