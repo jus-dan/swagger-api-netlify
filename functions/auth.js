@@ -657,46 +657,21 @@ router.post('/forgot-password', async (req, res) => {
     console.log('🔐 Passwort-Reset angefordert für:', email);
     console.log('🔗 Reset-URL:', resetUrl);
 
-    // Prüfe ob SendGrid konfiguriert ist
-    if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL) {
-      console.log('📧 SendGrid konfiguriert - sende E-Mail');
-      
-      // E-Mail senden
-      const emailResult = await sendPasswordResetEmail(email, resetUrl, person.name);
-      
-      if (emailResult.success) {
-        console.log('✅ E-Mail erfolgreich gesendet:', emailResult.messageId);
-        
-        res.status(200).json({
-          message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
-          emailSent: true,
-          messageId: emailResult.messageId,
-          mode: 'production'
-        });
-      } else {
-        console.error('❌ E-Mail konnte nicht gesendet werden:', emailResult.error);
-        
-        // Fallback bei E-Mail-Fehler
-        res.status(200).json({
-          message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
-          emailSent: false,
-          emailError: emailResult.error,
-          mode: 'production_fallback',
-          resetUrl: resetUrl // Link anzeigen für manuelles Testen
-        });
+    // Vereinfachte Logik: Immer Entwicklungsmodus für den Moment
+    console.log('🔧 Entwicklungsmodus - zeige Reset-Link direkt an');
+    
+    res.status(200).json({
+      message: 'Passwort-Reset angefordert (Entwicklungsmodus)',
+      emailSent: false,
+      mode: 'development',
+      resetUrl: resetUrl,
+      note: 'SendGrid ist nicht konfiguriert. Verwende den Link zum Testen.',
+      debug: {
+        hasSendGridKey: !!process.env.SENDGRID_API_KEY,
+        hasFromEmail: !!process.env.SENDGRID_FROM_EMAIL,
+        nodeEnv: process.env.NODE_ENV
       }
-    } else {
-      console.log('🔧 SendGrid nicht konfiguriert - Entwicklungsmodus');
-      
-      // Entwicklungsmodus: Link direkt anzeigen
-      res.status(200).json({
-        message: 'Passwort-Reset angefordert (Entwicklungsmodus)',
-        emailSent: false,
-        mode: 'development',
-        resetUrl: resetUrl,
-        note: 'SendGrid ist nicht konfiguriert. Verwende den Link zum Testen.'
-      });
-    }
+    });
 
   } catch (error) {
     console.error('❌ Fehler bei Passwort vergessen:', error);

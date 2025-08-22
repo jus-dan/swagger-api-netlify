@@ -51,7 +51,36 @@ const ForgotPassword = ({ onBack, onSuccess }) => {
           <h3>📧 E-Mail gesendet!</h3>
           <p>{success.message}</p>
           
-          {success.emailSent ? (
+          {/* Debug-Info anzeigen */}
+          <div className="debug-info" style={{ marginTop: '1rem', padding: '1rem', background: '#f8f9fa', borderRadius: '6px', fontSize: '0.8rem' }}>
+            <strong>Debug-Info:</strong>
+            <pre>{JSON.stringify(success, null, 2)}</pre>
+          </div>
+
+          {/* Hauptanzeige basierend auf dem Modus */}
+          {success.mode === 'development' ? (
+            <div className="dev-mode">
+              <h4>🔧 Entwicklungsmodus aktiviert</h4>
+              <p>{success.note || 'SendGrid ist nicht konfiguriert. Verwende den Link zum Testen.'}</p>
+              {success.resetUrl && (
+                <div className="reset-link-box">
+                  <h5>🔗 Reset-Link zum Testen:</h5>
+                  <div className="link-container">
+                    <a href={success.resetUrl} target="_blank" rel="noopener noreferrer" className="reset-link">
+                      {success.resetUrl}
+                    </a>
+                    <button 
+                      onClick={() => navigator.clipboard.writeText(success.resetUrl)}
+                      className="copy-button"
+                      title="Link kopieren"
+                    >
+                      📋
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : success.emailSent ? (
             <div className="email-success">
               <h4>✅ E-Mail erfolgreich versendet!</h4>
               <p>Bitte überprüfe dein E-Mail-Postfach und klicke auf den Reset-Link.</p>
@@ -62,36 +91,12 @@ const ForgotPassword = ({ onBack, onSuccess }) => {
             </div>
           ) : (
             <div className="email-fallback">
-              {success.mode === 'development' ? (
-                <div className="dev-mode">
-                  <h4>🔧 Entwicklungsmodus aktiviert</h4>
-                  <p>{success.note}</p>
-                  <div className="reset-link-box">
-                    <h5>🔗 Reset-Link zum Testen:</h5>
-                    <div className="link-container">
-                      <a href={success.resetUrl} target="_blank" rel="noopener noreferrer" className="reset-link">
-                        {success.resetUrl}
-                      </a>
-                      <button 
-                        onClick={() => navigator.clipboard.writeText(success.resetUrl)}
-                        className="copy-button"
-                        title="Link kopieren"
-                      >
-                        📋
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="email-error">
-                  <h4>⚠️ E-Mail konnte nicht gesendet werden</h4>
-                  <p>Fehler: {success.emailError}</p>
-                  {success.resetUrl && (
-                    <div className="dev-info">
-                      <h4>🔧 Fallback - Reset-Link:</h4>
-                      <p><a href={success.resetUrl} target="_blank" rel="noopener noreferrer">{success.resetUrl}</a></p>
-                    </div>
-                  )}
+              <h4>⚠️ E-Mail konnte nicht gesendet werden</h4>
+              {success.emailError && <p>Fehler: {success.emailError}</p>}
+              {success.resetUrl && (
+                <div className="dev-info">
+                  <h4>🔧 Fallback - Reset-Link:</h4>
+                  <p><a href={success.resetUrl} target="_blank" rel="noopener noreferrer">{success.resetUrl}</a></p>
                 </div>
               )}
             </div>
