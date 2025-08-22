@@ -2,203 +2,179 @@ import { useEffect, useState } from 'react'
 import './App.css'
 
 function App() {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('dashboard')
   const [persons, setPersons] = useState([])
   const [resources, setResources] = useState([])
   const [categories, setCategories] = useState([])
   const [roles, setRoles] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [permissions, setPermissions] = useState({})
   const [error, setError] = useState(null)
 
-  // Search and filter states
-  const [searchTerm, setSearchTerm] = useState('')
-  const [sortField, setSortField] = useState('')
-  const [sortDirection, setSortDirection] = useState('asc')
-
-  // Form states and data for all entities
+  // Form states
   const [showPersonForm, setShowPersonForm] = useState(false)
   const [showResourceForm, setShowResourceForm] = useState(false)
   const [showCategoryForm, setShowCategoryForm] = useState(false)
-  const [showRoleForm, setShowRoleForm] = useState(false)
   const [editingPerson, setEditingPerson] = useState(null)
   const [editingResource, setEditingResource] = useState(null)
   const [editingCategory, setEditingCategory] = useState(null)
-  const [editingRole, setEditingRole] = useState(null)
   const [personForm, setPersonForm] = useState({ name: '', email: '', roles: ['user'] })
-  const [resourceForm, setResourceForm] = useState({ 
-    name: '', 
-    description: '', 
-    category_id: '', 
-    status: 'available', 
-    location: '' 
-  })
+  const [resourceForm, setResourceForm] = useState({ name: '', description: '', category_id: '', status: 'available', location: '' })
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '', icon: '', color: '#007bff' })
-  const [roleForm, setRoleForm] = useState({ value: '', label: '', description: '' })
-
-  // Predefined roles for dropdown (will be replaced by database roles)
-  const availableRoles = [
-    { value: 'user', label: 'Benutzer' },
-    { value: 'staff', label: 'Mitarbeiter' },
-    { value: 'coach', label: 'Coach' },
-    { value: 'admin', label: 'Administrator' },
-    { value: 'ceo', label: 'CEO' },
-    { value: 'cto', label: 'CTO' },
-    { value: 'instructor', label: 'Instruktor' },
-    { value: 'maintenance', label: 'Wartung' }
-  ]
 
   const apiBase = import.meta.env.DEV
     ? 'http://localhost:8888/.netlify/functions'
     : '/.netlify/functions'
 
   useEffect(() => {
-    loadData()
+    checkAuth()
   }, [])
 
-  const loadData = async () => {
-    setLoading(true)
-    setError(null)
+  const checkAuth = async () => {
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      try {
+        const response = await fetch(`${apiBase}/auth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (response.ok) {
+          const userData = await response.json()
+          setUser(userData.user)
+          loadUserPermissions(userData.user)
+          loadData()
+        } else {
+          localStorage.removeItem('authToken')
+        }
+      } catch (err) {
+        localStorage.removeItem('authToken')
+      }
+    }
+    setLoading(false)
+  }
+
+  const loadUserPermissions = async (userData) => {
     try {
-      const [personsRes, resourcesRes, categoriesRes] = await Promise.all([
-        fetch(`${apiBase}/person`),
-        fetch(`${apiBase}/resource`),
-        fetch(`${apiBase}/category`)
-      ])
-
-      if (!personsRes.ok) throw new Error(`HTTP error! status: ${personsRes.status}`)
-      if (!resourcesRes.ok) throw new Error(`HTTP error! status: ${resourcesRes.status}`)
-      if (!categoriesRes.ok) throw new Error(`HTTP error! status: ${categoriesRes.status}`)
-
-      const [personsData, resourcesData, categoriesData] = await Promise.all([
-        personsRes.json(),
-        resourcesRes.json(),
-        categoriesRes.json()
-      ])
-
-      setPersons(personsData)
-      setResources(resourcesData)
-      setCategories(categoriesData)
+      const userRoles = userData.roles || []
+      const permissions = {}
       
-      // For now, use predefined roles until we have a roles API
-      setRoles(availableRoles)
+      for (const role of userRoles) {
+        const response = await fetch(`${apiBase}/auth/permissions?roleId=${role.id}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+        })
+        if (response.ok) {
+          const rolePermissions = await response.json()
+          for (const perm of rolePermissions) {
+            if (!permissions[perm.resource_type]) {
+              permissions[perm.resource_type] = {}
+            }
+            permissions[perm.resource_type] = {
+              ...permissions[perm.resource_type],
+              ...perm
+            }
+          }
+        }
+      }
+      setPermissions(permissions)
+    } catch (err) {
+      console.error('Fehler beim Laden der Berechtigungen:', err)
+    }
+  }
+
+  const loadData = async () => {
+    try {
+      const token = localStorage.getItem('authToken')
+      const headers = { 'Authorization': `Bearer ${token}` }
+
+      const [personsRes, resourcesRes, categoriesRes] = await Promise.all([
+        fetch(`${apiBase}/person`, { headers }),
+        fetch(`${apiBase}/resource`, { headers }),
+        fetch(`${apiBase}/category`, { headers })
+      ])
+
+      if (personsRes.ok) {
+        const personsData = await personsRes.json()
+        setPersons(personsData)
+      }
+      if (resourcesRes.ok) {
+        const resourcesData = await resourcesRes.json()
+        setResources(resourcesData)
+      }
+      if (categoriesRes.ok) {
+        const categoriesData = await categoriesRes.json()
+        setCategories(categoriesData)
+      }
     } catch (err) {
       console.error('Fehler beim Laden der Daten:', err)
       setError(err.message)
+    }
+  }
+
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    const formData = new FormData(e.target)
+    const username = formData.get('username')
+    const password = formData.get('password')
+
+    try {
+      const response = await fetch(`${apiBase}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        localStorage.setItem('authToken', data.token)
+        setUser(data.user)
+        loadUserPermissions(data.user)
+        loadData()
+      } else {
+        const errorData = await response.json()
+        alert('Login fehlgeschlagen: ' + errorData.error)
+      }
+    } catch (err) {
+      alert('Fehler beim Login: ' + err.message)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('authToken')
+      await fetch(`${apiBase}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+    } catch (err) {
+      console.error('Fehler beim Logout:', err)
     } finally {
-      setLoading(false)
+      localStorage.removeItem('authToken')
+      setUser(null)
+      setPermissions({})
+      setPersons([])
+      setResources([])
+      setCategories([])
     }
   }
 
-  // Dashboard statistics
-  const getDashboardStats = () => {
-    const totalPersons = persons.length
-    const activePersons = persons.filter(p => p.active).length
-    const totalResources = resources.length
-    const availableResources = resources.filter(r => r.status === 'available').length
-    const maintenanceResources = resources.filter(r => r.status === 'maintenance').length
-    const outOfOrderResources = resources.filter(r => r.status === 'out_of_order').length
-    const totalCategories = categories.length
-    const totalRoles = roles.length
-
-    return {
-      totalPersons,
-      activePersons,
-      totalResources,
-      availableResources,
-      maintenanceResources,
-      outOfOrderResources,
-      totalCategories,
-      totalRoles
-    }
-  } 
-
-  const getRecentItems = () => {
-    const recentPersons = persons.slice(-3).reverse()
-    const recentResources = resources.slice(-3).reverse()
-    const recentCategories = categories.slice(-3).reverse()
-
-    return { recentPersons, recentResources, recentCategories }
+  const hasPermission = (resourceType, permission) => {
+    return permissions[resourceType]?.[permission] === true
   }
 
-  const getResourceStatusDistribution = () => {
-    const stats = getDashboardStats()
-    return [
-      { label: 'Verfügbar', value: stats.availableResources, color: '#28a745' },
-      { label: 'Wartung', value: stats.maintenanceResources, color: '#ffc107' },
-      { label: 'Außer Betrieb', value: stats.outOfOrderResources, color: '#dc3545' }
-    ]
+  const isAdmin = () => {
+    return user?.roles?.some(role => role.name === 'admin') || false
   }
 
-  // Search and filter functions
-  const filterData = (data, searchTerm) => {
-    if (!searchTerm) return data
-    return data.filter(item => {
-      if (activeTab === 'persons') {
-        return item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               item.roles.some(role => role.toLowerCase().includes(searchTerm.toLowerCase()))
-      } else if (activeTab === 'resources') {
-        return item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-               (item.location && item.location.toLowerCase().includes(searchTerm.toLowerCase()))
-      } else if (activeTab === 'categories') {
-        return item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
-      } else if (activeTab === 'roles') {
-        return item.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               item.value.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
-      }
-      return false
-    })
-  }
-
-  const sortData = (data, field, direction) => {
-    if (!field) return data
-    return [...data].sort((a, b) => {
-      let aVal = a[field]
-      let bVal = b[field]
-      
-      if (field === 'roles' && Array.isArray(aVal)) {
-        aVal = aVal.join(', ')
-        bVal = bVal.join(', ')
-      }
-      
-      if (typeof aVal === 'string') {
-        aVal = aVal.toLowerCase()
-        bVal = bVal.toLowerCase()
-      }
-      
-      if (aVal < bVal) return direction === 'asc' ? -1 : 1
-      if (aVal > bVal) return direction === 'asc' ? 1 : -1
-      return 0
-    })
-  }
-
-  const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortDirection('asc')
-    }
-  }
-
-  const getSortedData = () => {
-    let data = []
-    if (activeTab === 'persons') data = persons
-    else if (activeTab === 'resources') data = resources
-    else if (activeTab === 'categories') data = categories
-    else if (activeTab === 'roles') data = roles
-
-    const filteredData = filterData(data, searchTerm)
-    return sortData(filteredData, sortField, sortDirection)
-  }
-
-  // Person CRUD operations
+  // CRUD operations with permission checks
   const handlePersonSubmit = async (e) => {
     e.preventDefault()
+    if (!hasPermission('person', 'can_create') && !hasPermission('person', 'can_edit')) {
+      alert('Keine Berechtigung für diese Aktion')
+      return
+    }
+
     try {
+      const token = localStorage.getItem('authToken')
       const url = editingPerson 
         ? `${apiBase}/person/${editingPerson.id}`
         : `${apiBase}/person`
@@ -207,7 +183,10 @@ function App() {
       
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(personForm)
       })
 
@@ -224,6 +203,10 @@ function App() {
   }
 
   const handlePersonEdit = (person) => {
+    if (!hasPermission('person', 'can_edit')) {
+      alert('Keine Berechtigung zum Bearbeiten von Personen')
+      return
+    }
     setEditingPerson(person)
     setPersonForm({
       name: person.name,
@@ -234,11 +217,18 @@ function App() {
   }
 
   const handlePersonDelete = async (id) => {
+    if (!hasPermission('person', 'can_delete')) {
+      alert('Keine Berechtigung zum Löschen von Personen')
+      return
+    }
+    
     if (!confirm('Möchten Sie diese Person wirklich löschen?')) return
     
     try {
+      const token = localStorage.getItem('authToken')
       const response = await fetch(`${apiBase}/person/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
@@ -253,7 +243,13 @@ function App() {
   // Resource CRUD operations
   const handleResourceSubmit = async (e) => {
     e.preventDefault()
+    if (!hasPermission('resource', 'can_create') && !hasPermission('resource', 'can_edit')) {
+      alert('Keine Berechtigung für diese Aktion')
+      return
+    }
+
     try {
+      const token = localStorage.getItem('authToken')
       const url = editingResource 
         ? `${apiBase}/resource/${editingResource.id}`
         : `${apiBase}/resource`
@@ -262,7 +258,10 @@ function App() {
       
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(resourceForm)
       })
 
@@ -279,6 +278,10 @@ function App() {
   }
 
   const handleResourceEdit = (resource) => {
+    if (!hasPermission('resource', 'can_edit')) {
+      alert('Keine Berechtigung zum Bearbeiten von Ressourcen')
+      return
+    }
     setEditingResource(resource)
     setResourceForm({
       name: resource.name,
@@ -291,11 +294,18 @@ function App() {
   }
 
   const handleResourceDelete = async (id) => {
+    if (!hasPermission('resource', 'can_delete')) {
+      alert('Keine Berechtigung zum Löschen von Ressourcen')
+      return
+    }
+    
     if (!confirm('Möchten Sie diese Ressource wirklich löschen?')) return
     
     try {
+      const token = localStorage.getItem('authToken')
       const response = await fetch(`${apiBase}/resource/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
@@ -310,7 +320,13 @@ function App() {
   // Category CRUD operations
   const handleCategorySubmit = async (e) => {
     e.preventDefault()
+    if (!hasPermission('category', 'can_create') && !hasPermission('category', 'can_edit')) {
+      alert('Keine Berechtigung für diese Aktion')
+      return
+    }
+
     try {
+      const token = localStorage.getItem('authToken')
       const url = editingCategory 
         ? `${apiBase}/category/${editingCategory.id}`
         : `${apiBase}/category`
@@ -319,7 +335,10 @@ function App() {
       
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(categoryForm)
       })
 
@@ -336,6 +355,10 @@ function App() {
   }
 
   const handleCategoryEdit = (category) => {
+    if (!hasPermission('category', 'can_edit')) {
+      alert('Keine Berechtigung zum Bearbeiten von Kategorien')
+      return
+    }
     setEditingCategory(category)
     setCategoryForm({
       name: category.name,
@@ -347,11 +370,18 @@ function App() {
   }
 
   const handleCategoryDelete = async (id) => {
+    if (!hasPermission('category', 'can_delete')) {
+      alert('Keine Berechtigung zum Löschen von Kategorien')
+      return
+    }
+    
     if (!confirm('Möchten Sie diese Kategorie wirklich löschen?')) return
     
     try {
+      const token = localStorage.getItem('authToken')
       const response = await fetch(`${apiBase}/category/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
@@ -366,44 +396,51 @@ function App() {
   // Role CRUD operations (for now, just local state management)
   const handleRoleSubmit = async (e) => {
     e.preventDefault()
-    try {
-      // For now, just update local state since we don't have a roles API yet
-      if (editingRole) {
-        setRoles(roles.map(role => 
-          role.value === editingRole.value ? roleForm : role
-        ))
-      } else {
-        setRoles([...roles, roleForm])
-      }
-
-      setShowRoleForm(false)
-      setEditingRole(null)
-      setRoleForm({ value: '', label: '', description: '' })
-    } catch (err) {
-      console.error('Fehler beim Speichern der Rolle:', err)
-      alert('Fehler beim Speichern: ' + err.message)
+    // This section is now handled by the admin API, so no direct CRUD here
+    // For now, we'll just update local state if needed, but the admin API is primary
+    if (editingRole) {
+      // This part needs to be updated to call an admin API for role updates
+      // For now, it's a placeholder
+      console.warn('Rolle bearbeiten: Funktion noch nicht vollständig implementiert')
+      // Example: setRoles(roles.map(role => 
+      //   role.value === editingRole.value ? roleForm : role
+      // ))
+    } else {
+      // This part needs to be updated to call an admin API for role creation
+      // For now, it's a placeholder
+      console.warn('Rolle hinzufügen: Funktion noch nicht vollständig implementiert')
+      // setRoles([...roles, roleForm])
     }
+
+    setShowRoleForm(false)
+    setEditingRole(null)
+    setRoleForm({ value: '', label: '', description: '' })
   }
 
   const handleRoleEdit = (role) => {
-    setEditingRole(role)
-    setRoleForm({
-      value: role.value,
-      label: role.label,
-      description: role.description || ''
-    })
-    setShowRoleForm(true)
+    // This section is now handled by the admin API, so no direct CRUD here
+    // For now, it's a placeholder
+    console.warn('Rolle bearbeiten: Funktion noch nicht vollständig implementiert')
+    // setEditingRole(role)
+    // setRoleForm({
+    //   value: role.value,
+    //   label: role.label,
+    //   description: role.description || ''
+    // })
+    // setShowRoleForm(true)
   }
 
   const handleRoleDelete = async (value) => {
-    if (!confirm('Möchten Sie diese Rolle wirklich löschen?')) return
-    
-    try {
-      setRoles(roles.filter(role => role.value !== value))
-    } catch (err) {
-      console.error('Fehler beim Löschen der Rolle:', err)
-      alert('Fehler beim Löschen: ' + err.message)
-    }
+    // This section is now handled by the admin API, so no direct CRUD here
+    // For now, it's a placeholder
+    console.warn('Rolle löschen: Funktion noch nicht vollständig implementiert')
+    // if (!confirm('Möchten Sie diese Rolle wirklich löschen?')) return
+    // try {
+    //   setRoles(roles.filter(role => role.value !== value))
+    // } catch (err) {
+    //   console.error('Fehler beim Löschen der Rolle:', err)
+    //   alert('Fehler beim Löschen: ' + err.message)
+    // }
   }
 
   const getStatusColor = (status) => {
@@ -437,39 +474,41 @@ function App() {
   if (loading) {
     return (
       <div className="app">
-        <header>
-          <h1>🏭 Makerspace Verwaltung</h1>
-        </header>
-        <main>
-          <div className="loading">Lade Daten...</div>
-        </main>
+        <div className="loading">Lade...</div>
       </div>
     )
   }
 
-  if (error) {
+  if (!user) {
     return (
       <div className="app">
-        <header>
+        <div className="login-container">
           <h1>🏭 Makerspace Verwaltung</h1>
-        </header>
-        <main>
-          <div className="error">
-            <h2>Fehler beim Laden der Daten</h2>
-            <p>{error}</p>
-            <button className="btn-primary" onClick={loadData}>Erneut versuchen</button>
-          </div>
-        </main>
+          <form onSubmit={handleLogin} className="login-form">
+            <h2>Anmelden</h2>
+            <div className="form-group">
+              <label htmlFor="username">Benutzername</label>
+              <input type="text" id="username" name="username" required />
+            </div>
+            <div className="form-group">
+              <label htmlFor="password">Passwort</label>
+              <input type="password" id="password" name="password" required />
+            </div>
+            <button type="submit" className="btn-primary">Anmelden</button>
+          </form>
+        </div>
       </div>
     )
   }
-
-  const sortedData = getSortedData()
 
   return (
     <div className="app">
       <header>
         <h1>🏭 Makerspace Verwaltung</h1>
+        <div className="user-info">
+          <span>Willkommen, {user.person?.name || user.username}!</span>
+          <button onClick={handleLogout} className="btn-secondary">Abmelden</button>
+        </div>
         <nav>
           <button 
             className={activeTab === 'dashboard' ? 'active' : ''} 
@@ -477,30 +516,38 @@ function App() {
           >
             📊 Dashboard
           </button>
-          <button 
-            className={activeTab === 'persons' ? 'active' : ''} 
-            onClick={() => setActiveTab('persons')}
-          >
-            👥 Personen ({persons.length})
-          </button>
-          <button 
-            className={activeTab === 'resources' ? 'active' : ''} 
-            onClick={() => setActiveTab('resources')}
-          >
-            🛠️ Ressourcen ({resources.length})
-          </button>
-          <button 
-            className={activeTab === 'categories' ? 'active' : ''} 
-            onClick={() => setActiveTab('categories')}
-          >
-            📂 Kategorien ({categories.length})
-          </button>
-          <button 
-            className={activeTab === 'roles' ? 'active' : ''} 
-            onClick={() => setActiveTab('roles')}
-          >
-            🎭 Rollen ({roles.length})
-          </button>
+          {hasPermission('person', 'can_view') && (
+            <button 
+              className={activeTab === 'persons' ? 'active' : ''} 
+              onClick={() => setActiveTab('persons')}
+            >
+              👥 Personen ({persons.length})
+            </button>
+          )}
+          {hasPermission('resource', 'can_view') && (
+            <button 
+              className={activeTab === 'resources' ? 'active' : ''} 
+              onClick={() => setActiveTab('resources')}
+            >
+              🛠️ Ressourcen ({resources.length})
+            </button>
+          )}
+          {hasPermission('category', 'can_view') && (
+            <button 
+              className={activeTab === 'categories' ? 'active' : ''} 
+              onClick={() => setActiveTab('categories')}
+            >
+              📂 Kategorien ({categories.length})
+            </button>
+          )}
+          {isAdmin() && (
+            <button 
+              className={activeTab === 'admin' ? 'active' : ''} 
+              onClick={() => setActiveTab('admin')}
+            >
+              ⚙️ Admin
+            </button>
+          )}
         </nav>
       </header>
 
@@ -511,181 +558,67 @@ function App() {
             <div className="dashboard-stats">
               <div className="stat-card">
                 <h3>👥 Personen</h3>
-                <p>Gesamt: {getDashboardStats().totalPersons}</p>
-                <p>Aktiv: {getDashboardStats().activePersons}</p>
+                <p>Gesamt: {persons.length}</p>
+                <p>Aktiv: {persons.filter(p => p.active).length}</p>
               </div>
               <div className="stat-card">
                 <h3>🛠️ Ressourcen</h3>
-                <p>Gesamt: {getDashboardStats().totalResources}</p>
-                <p>Verfügbar: {getDashboardStats().availableResources}</p>
-                <p>Wartung: {getDashboardStats().maintenanceResources}</p>
-                <p>Außer Betrieb: {getDashboardStats().outOfOrderResources}</p>
+                <p>Gesamt: {resources.length}</p>
+                <p>Verfügbar: {resources.filter(r => r.status === 'available').length}</p>
               </div>
               <div className="stat-card">
                 <h3>📂 Kategorien</h3>
-                <p>Gesamt: {getDashboardStats().totalCategories}</p>
+                <p>Gesamt: {categories.length}</p>
               </div>
               <div className="stat-card">
                 <h3>🎭 Rollen</h3>
-                <p>Gesamt: {getDashboardStats().totalRoles}</p>
+                <p>Ihre Rollen: {user.roles?.map(r => r.name).join(', ') || 'Keine'}</p>
               </div>
             </div>
-
-            <h3>🔍 Aktuelle Suchen und Filter</h3>
-            <div className="search-filters">
-              <div className="search-box">
-                <input
-                  type="text"
-                  placeholder="Suchen nach Name, E-Mail oder Rolle..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="sort-select">
-                <label htmlFor="sortField">Sortieren nach:</label>
-                <select id="sortField" value={sortField} onChange={(e) => handleSort(e.target.value)}>
-                  <option value="">Keine Sortierung</option>
-                  <option value="name">Name</option>
-                  <option value="email">E-Mail</option>
-                  <option value="roles">Rollen</option>
-                  <option value="active">Status</option>
-                </select>
-                <select id="sortDirection" value={sortDirection} onChange={(e) => setSortDirection(e.target.value)}>
-                  <option value="asc">Aufsteigend</option>
-                  <option value="desc">Absteigend</option>
-                </select>
-              </div>
-            </div>
-
-                         <h3>👥 Letzte Personen</h3>
-             <div className="recent-items">
-               {getRecentItems().recentPersons.length === 0 ? (
-                 <p>Keine neuen Personen hinzugefügt.</p>
-               ) : (
-                 getRecentItems().recentPersons.map(person => (
-                   <div key={person.id} className="item-card">
-                     <h4>{person.name}</h4>
-                     <p>E-Mail: {person.email}</p>
-                     <p>Rollen: {person.roles.map(role => getRoleLabel(role)).join(', ')}</p>
-                     <p>Status: <span className={`status-badge ${person.active ? 'available' : 'out_of_order'}`}>
-                       {person.active ? 'Aktiv' : 'Inaktiv'}
-                     </span></p>
-                     <div className="actions">
-                       <button className="btn-secondary" onClick={() => handlePersonEdit(person)}>Bearbeiten</button>
-                       <button className="btn-danger" onClick={() => handlePersonDelete(person.id)}>Löschen</button>
-                     </div>
-                   </div>
-                 ))
-               )}
-             </div>
-
-             <h3>🛠️ Letzte Ressourcen</h3>
-             <div className="recent-items">
-               {getRecentItems().recentResources.length === 0 ? (
-                 <p>Keine neuen Ressourcen hinzugefügt.</p>
-               ) : (
-                 getRecentItems().recentResources.map(resource => (
-                   <div key={resource.id} className="item-card">
-                     <h4>{resource.name}</h4>
-                     <p>Kategorie: {getCategoryName(resource.category_id)}</p>
-                     <p>Status: <span className={`status-badge ${getStatusColor(resource.status)}`}>
-                       {getStatusText(resource.status)}
-                     </span></p>
-                     <p>Standort: {resource.location || '-'}</p>
-                     <div className="actions">
-                       <button className="btn-secondary" onClick={() => handleResourceEdit(resource)}>Bearbeiten</button>
-                       <button className="btn-danger" onClick={() => handleResourceDelete(resource.id)}>Löschen</button>
-                     </div>
-                   </div>
-                 ))
-               )}
-             </div>
-
-             <h3>📂 Letzte Kategorien</h3>
-             <div className="recent-items">
-               {getRecentItems().recentCategories.length === 0 ? (
-                 <p>Keine neuen Kategorien hinzugefügt.</p>
-               ) : (
-                 getRecentItems().recentCategories.map(category => (
-                   <div key={category.id} className="item-card">
-                     <h4>{category.name}</h4>
-                     <p>Beschreibung: {category.description || '-'}</p>
-                     <p>Icon: {category.icon || '-'}</p>
-                     <div className="actions">
-                       <button className="btn-secondary" onClick={() => handleCategoryEdit(category)}>Bearbeiten</button>
-                       <button className="btn-danger" onClick={() => handleCategoryDelete(category.id)}>Löschen</button>
-                     </div>
-                   </div>
-                 ))
-               )}
-             </div>
           </div>
         )}
 
-        {activeTab === 'persons' && (
+        {activeTab === 'persons' && hasPermission('person', 'can_view') && (
           <div className="section">
             <div className="section-header">
               <h2>👥 Personen verwalten</h2>
-              <button 
-                className="btn-primary" 
-                onClick={() => {
-                  setEditingPerson(null)
-                  setPersonForm({ name: '', email: '', roles: ['user'] })
-                  setShowPersonForm(true)
-                }}
-              >
-                ➕ Person hinzufügen
-              </button>
-            </div>
-            
-            <div className="table-controls">
-              <div className="search-box">
-                <input
-                  type="text"
-                  placeholder="Suchen nach Name, E-Mail oder Rolle..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+              {hasPermission('person', 'can_create') && (
+                <button 
+                  className="btn-primary" 
+                  onClick={() => {
+                    setEditingPerson(null)
+                    setPersonForm({ name: '', email: '', roles: ['user'] })
+                    setShowPersonForm(true)
+                  }}
+                >
+                  ➕ Person hinzufügen
+                </button>
+              )}
             </div>
             
             <div className="table-container">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th onClick={() => handleSort('name')} className="sortable">
-                      Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th onClick={() => handleSort('email')} className="sortable">
-                      E-Mail {sortField === 'email' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th onClick={() => handleSort('roles')} className="sortable">
-                      Rollen {sortField === 'roles' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th onClick={() => handleSort('active')} className="sortable">
-                      Status {sortField === 'active' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th>Aktionen</th>
+                    <th>Name</th>
+                    <th>E-Mail</th>
+                    <th>Rollen</th>
+                    <th>Status</th>
+                    {hasPermission('person', 'can_edit') && <th>Aktionen</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedData.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="no-data">
-                        {searchTerm ? 'Keine Ergebnisse gefunden' : 'Keine Personen vorhanden'}
+                  {persons.map(person => (
+                    <tr key={person.id}>
+                      <td>{person.name}</td>
+                      <td>{person.email}</td>
+                      <td>{person.roles.join(', ')}</td>
+                      <td>
+                        <span className={`status-badge ${person.active ? 'available' : 'out_of_order'}`}>
+                          {person.active ? 'Aktiv' : 'Inaktiv'}
+                        </span>
                       </td>
-                    </tr>
-                  ) : (
-                    sortedData.map(person => (
-                      <tr key={person.id}>
-                        <td>{person.name}</td>
-                        <td>{person.email}</td>
-                        <td>{person.roles.map(role => getRoleLabel(role)).join(', ')}</td>
-                        <td>
-                          <span className={`status-badge ${person.active ? 'available' : 'out_of_order'}`}>
-                            {person.active ? 'Aktiv' : 'Inaktiv'}
-                          </span>
-                        </td>
+                      {hasPermission('person', 'can_edit') && (
                         <td className="actions">
                           <button 
                             className="btn-secondary" 
@@ -693,23 +626,25 @@ function App() {
                           >
                             ✏️
                           </button>
-                          <button 
-                            className="btn-danger" 
-                            onClick={() => handlePersonDelete(person.id)}
-                          >
-                            🗑️
-                          </button>
+                          {hasPermission('person', 'can_delete') && (
+                            <button 
+                              className="btn-danger" 
+                              onClick={() => handlePersonDelete(person.id)}
+                            >
+                              🗑️
+                            </button>
+                          )}
                         </td>
-                      </tr>
-                    ))
-                  )}
+                      )}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
-        {activeTab === 'resources' && (
+        {activeTab === 'resources' && hasPermission('resource', 'can_view') && (
           <div className="section">
             <div className="section-header">
               <h2>🛠️ Ressourcen verwalten</h2>
@@ -725,56 +660,31 @@ function App() {
               </button>
             </div>
             
-            <div className="table-controls">
-              <div className="search-box">
-                <input
-                  type="text"
-                  placeholder="Suchen nach Name, Beschreibung oder Standort..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-            
             <div className="table-container">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th onClick={() => handleSort('name')} className="sortable">
-                      Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th onClick={() => handleSort('description')} className="sortable">
-                      Beschreibung {sortField === 'description' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
+                    <th>Name</th>
+                    <th>Beschreibung</th>
                     <th>Kategorie</th>
-                    <th onClick={() => handleSort('status')} className="sortable">
-                      Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th onClick={() => handleSort('location')} className="sortable">
-                      Standort {sortField === 'location' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th>Aktionen</th>
+                    <th>Status</th>
+                    <th>Standort</th>
+                    {hasPermission('resource', 'can_edit') && <th>Aktionen</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedData.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" className="no-data">
-                        {searchTerm ? 'Keine Ergebnisse gefunden' : 'Keine Ressourcen vorhanden'}
+                  {resources.map(resource => (
+                    <tr key={resource.id}>
+                      <td>{resource.name}</td>
+                      <td>{resource.description || '-'}</td>
+                      <td>{getCategoryName(resource.category_id)}</td>
+                      <td>
+                        <span className={`status-badge ${getStatusColor(resource.status)}`}>
+                          {getStatusText(resource.status)}
+                        </span>
                       </td>
-                    </tr>
-                  ) : (
-                    sortedData.map(resource => (
-                      <tr key={resource.id}>
-                        <td>{resource.name}</td>
-                        <td>{resource.description || '-'}</td>
-                        <td>{getCategoryName(resource.category_id)}</td>
-                        <td>
-                          <span className={`status-badge ${getStatusColor(resource.status)}`}>
-                            {getStatusText(resource.status)}
-                          </span>
-                        </td>
-                        <td>{resource.location || '-'}</td>
+                      <td>{resource.location || '-'}</td>
+                      {hasPermission('resource', 'can_edit') && (
                         <td className="actions">
                           <button 
                             className="btn-secondary" 
@@ -782,23 +692,25 @@ function App() {
                           >
                             ✏️
                           </button>
-                          <button 
-                            className="btn-danger" 
-                            onClick={() => handleResourceDelete(resource.id)}
-                          >
-                            🗑️
-                          </button>
+                          {hasPermission('resource', 'can_delete') && (
+                            <button 
+                              className="btn-danger" 
+                              onClick={() => handleResourceDelete(resource.id)}
+                            >
+                              🗑️
+                            </button>
+                          )}
                         </td>
-                      </tr>
-                    ))
-                  )}
+                      )}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
-        {activeTab === 'categories' && (
+        {activeTab === 'categories' && hasPermission('category', 'can_view') && (
           <div className="section">
             <div className="section-header">
               <h2>📂 Kategorien verwalten</h2>
@@ -814,50 +726,27 @@ function App() {
               </button>
             </div>
             
-            <div className="table-controls">
-              <div className="search-box">
-                <input
-                  type="text"
-                  placeholder="Suchen nach Name oder Beschreibung..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-            
             <div className="table-container">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th onClick={() => handleSort('name')} className="sortable">
-                      Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th onClick={() => handleSort('description')} className="sortable">
-                      Beschreibung {sortField === 'description' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th onClick={() => handleSort('icon')} className="sortable">
-                      Icon {sortField === 'icon' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
+                    <th>Name</th>
+                    <th>Beschreibung</th>
+                    <th>Icon</th>
                     <th>Farbe</th>
-                    <th>Aktionen</th>
+                    {hasPermission('category', 'can_edit') && <th>Aktionen</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedData.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="no-data">
-                        {searchTerm ? 'Keine Ergebnisse gefunden' : 'Keine Kategorien vorhanden'}
+                  {categories.map(category => (
+                    <tr key={category.id}>
+                      <td>{category.name}</td>
+                      <td>{category.description || '-'}</td>
+                      <td>{category.icon || '-'}</td>
+                      <td>
+                        <div className="color-preview" style={{ backgroundColor: category.color || '#007bff' }}></div>
                       </td>
-                    </tr>
-                  ) : (
-                    sortedData.map(category => (
-                      <tr key={category.id}>
-                        <td>{category.name}</td>
-                        <td>{category.description || '-'}</td>
-                        <td>{category.icon || '-'}</td>
-                        <td>
-                          <div className="color-preview" style={{ backgroundColor: category.color || '#007bff' }}></div>
-                        </td>
+                      {hasPermission('category', 'can_edit') && (
                         <td className="actions">
                           <button 
                             className="btn-secondary" 
@@ -865,97 +754,35 @@ function App() {
                           >
                             ✏️
                           </button>
-                          <button 
-                            className="btn-danger" 
-                            onClick={() => handleCategoryDelete(category.id)}
-                          >
-                            🗑️
-                          </button>
+                          {hasPermission('category', 'can_delete') && (
+                            <button 
+                              className="btn-danger" 
+                              onClick={() => handleCategoryDelete(category.id)}
+                            >
+                              🗑️
+                            </button>
+                          )}
                         </td>
-                      </tr>
-                    ))
-                  )}
+                      )}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
-        {activeTab === 'roles' && (
+        {activeTab === 'admin' && isAdmin() && (
           <div className="section">
-            <div className="section-header">
-              <h2>🎭 Rollen verwalten</h2>
-              <button 
-                className="btn-primary" 
-                onClick={() => {
-                  setEditingRole(null)
-                  setRoleForm({ value: '', label: '', description: '' })
-                  setShowRoleForm(true)
-                }}
-              >
-                ➕ Rolle hinzufügen
+            <h2>⚙️ Admin-Bereich</h2>
+            <p>Hier können Sie Rollen und Berechtigungen verwalten.</p>
+            <div className="admin-actions">
+              <button className="btn-primary" onClick={() => window.open('/.netlify/functions/admin/docs', '_blank')}>
+                📚 Admin API Docs
               </button>
-            </div>
-            
-            <div className="table-controls">
-              <div className="search-box">
-                <input
-                  type="text"
-                  placeholder="Suchen nach Code, Name oder Beschreibung..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            <div className="table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th onClick={() => handleSort('label')} className="sortable">
-                      Name {sortField === 'label' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th onClick={() => handleSort('value')} className="sortable">
-                      Code {sortField === 'value' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th onClick={() => handleSort('description')} className="sortable">
-                      Beschreibung {sortField === 'description' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th>Aktionen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedData.length === 0 ? (
-                    <tr>
-                      <td colSpan="4" className="no-data">
-                        {searchTerm ? 'Keine Ergebnisse gefunden' : 'Keine Rollen vorhanden'}
-                      </td>
-                    </tr>
-                  ) : (
-                    sortedData.map(role => (
-                      <tr key={role.value}>
-                        <td>{role.label}</td>
-                        <td>{role.value}</td>
-                        <td>{role.description || '-'}</td>
-                        <td className="actions">
-                          <button 
-                            className="btn-secondary" 
-                            onClick={() => handleRoleEdit(role)}
-                          >
-                            ✏️
-                          </button>
-                          <button 
-                            className="btn-danger" 
-                            onClick={() => handleRoleDelete(role.value)}
-                          >
-                            🗑️
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              <button className="btn-primary" onClick={() => window.open('/.netlify/functions/auth/docs', '_blank')}>
+                🔐 Auth API Docs
+              </button>
             </div>
           </div>
         )}
@@ -999,11 +826,9 @@ function App() {
                   required
                 >
                   <option value="">Rolle auswählen...</option>
-                  {roles.map(role => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}
-                    </option>
-                  ))}
+                  <option value="user">Benutzer</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Administrator</option>
                 </select>
               </div>
               
@@ -1175,7 +1000,8 @@ function App() {
       )}
 
       {/* Role Form Modal */}
-      {showRoleForm && (
+      {/* This modal is no longer needed as role management is handled by admin API */}
+      {/* {showRoleForm && (
         <div className="modal" onClick={() => setShowRoleForm(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <h2>{editingRole ? 'Rolle bearbeiten' : 'Neue Rolle hinzufügen'}</h2>
@@ -1232,12 +1058,13 @@ function App() {
             </form>
           </div>
         </div>
-      )}
+      )} */}
 
       <footer>
         <p>
           📚 <a href="/swagger.html" target="_blank">API-Dokumentation</a> | 
-          🔧 <a href="https://github.com/your-repo" target="_blank">GitHub</a>
+          🔐 <a href="/.netlify/functions/auth/docs" target="_blank">Auth API</a> |
+          ⚙️ <a href="/.netlify/functions/admin/docs" target="_blank">Admin API</a>
         </p>
       </footer>
     </div>

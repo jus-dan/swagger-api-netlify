@@ -40,6 +40,16 @@
   status = 200
 
 [[redirects]]
+  from = "/auth/docs"
+  to = "/.netlify/functions/auth/docs"
+  status = 200
+
+[[redirects]]
+  from = "/admin/docs"
+  to = "/.netlify/functions/admin/docs"
+  status = 200
+
+[[redirects]]
   from = "/docs"
   to = "/.netlify/functions/swagger"
   status = 200

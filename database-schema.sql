@@ -10,6 +10,60 @@ CREATE TABLE IF NOT EXISTS person (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Benutzer-Authentifizierung
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  person_id INTEGER REFERENCES person(id) ON DELETE CASCADE,
+  username VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  last_login TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Rollen-Definitionen
+CREATE TABLE IF NOT EXISTS roles (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) UNIQUE NOT NULL,
+  description TEXT,
+  is_system_role BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Berechtigungen pro Rolle
+CREATE TABLE IF NOT EXISTS role_permissions (
+  id SERIAL PRIMARY KEY,
+  role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
+  resource_type VARCHAR(100) NOT NULL, -- 'person', 'resource', 'booking', etc.
+  permission_type VARCHAR(50) NOT NULL, -- 'read', 'write', 'delete', 'admin'
+  can_view BOOLEAN DEFAULT false,
+  can_edit BOOLEAN DEFAULT false,
+  can_delete BOOLEAN DEFAULT false,
+  can_create BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(role_id, resource_type, permission_type)
+);
+
+-- Benutzer-Rollen-Zuordnung
+CREATE TABLE IF NOT EXISTS user_roles (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
+  granted_by INTEGER REFERENCES users(id),
+  granted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, role_id)
+);
+
+-- Session-Management
+CREATE TABLE IF NOT EXISTS user_sessions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  session_token VARCHAR(255) UNIQUE NOT NULL,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Ressourcen-Kategorien
 CREATE TABLE IF NOT EXISTS resource_category (
   id SERIAL PRIMARY KEY,
@@ -58,22 +112,104 @@ CREATE TABLE IF NOT EXISTS maintenance_log (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Standard-Rollen einfügen
+INSERT INTO roles (name, description, is_system_role) VALUES
+('admin', 'Vollzugriff auf alle Funktionen', true),
+('manager', 'Verwaltung von Ressourcen und Buchungen', true),
+('user', 'Standard-Benutzer mit eingeschränkten Rechten', true),
+('guest', 'Gast mit nur Lese-Rechten', true)
+ON CONFLICT (name) DO NOTHING;
+
+-- Standard-Berechtigungen für Admin-Rolle
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'person', 'full', true, true, true, true
+FROM roles r WHERE r.name = 'admin'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'resource', 'full', true, true, true, true
+FROM roles r WHERE r.name = 'admin'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'booking', 'full', true, true, true, true
+FROM roles r WHERE r.name = 'admin'
+ON CONFLICT DO NOTHING;
+
+-- Standard-Berechtigungen für Manager-Rolle
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'person', 'limited', true, true, false, true
+FROM roles r WHERE r.name = 'manager'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'resource', 'limited', true, true, false, true
+FROM roles r WHERE r.name = 'manager'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'booking', 'limited', true, true, false, true
+FROM roles r WHERE r.name = 'manager'
+ON CONFLICT DO NOTHING;
+
+-- Standard-Berechtigungen für User-Rolle
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'person', 'read_only', true, false, false, false
+FROM roles r WHERE r.name = 'user'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'resource', 'read_only', true, false, false, false
+FROM roles r WHERE r.name = 'user'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'booking', 'limited', true, true, false, true
+FROM roles r WHERE r.name = 'user'
+ON CONFLICT DO NOTHING;
+
+-- Standard-Berechtigungen für Guest-Rolle
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'person', 'read_only', true, false, false, false
+FROM roles r WHERE r.name = 'guest'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'resource', 'read_only', true, false, false, false
+FROM roles r WHERE r.name = 'guest'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO role_permissions (role_id, resource_type, permission_type, can_view, can_edit, can_delete, can_create)
+SELECT r.id, 'booking', 'read_only', true, false, false, false
+FROM roles r WHERE r.name = 'guest'
+ON CONFLICT DO NOTHING;
+
 -- Standard-Kategorien einfügen
 INSERT INTO resource_category (name, description, icon, color) VALUES
 ('Maschinen', '3D-Drucker, CNC-Maschinen, Laser-Cutter', 'machine', '#FF6B6B'),
 ('Räume', 'Workshops, Meeting-Räume, Lager', 'room', '#4ECDC4'),
 ('Werkzeuge', 'Handwerkzeuge, Elektrowerkzeuge', 'tool', '#45B7D1'),
 ('Materialien', 'Holz, Metall, Kunststoff, Elektronik', 'material', '#96CEB4'),
-('Computer', 'Laptops, Desktop-PCs, Tablets', 'computer', '#FFEAA7');
+('Computer', 'Laptops, Desktop-PCs, Tablets', 'computer', '#FFEAA7')
+ON CONFLICT (name) DO NOTHING;
 
--- Trigger für updated_at
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
+-- Trigger für updated_at (optional - kann bei Bedarf später hinzugefügt werden)
+-- CREATE OR REPLACE FUNCTION update_updated_at_column()
+-- RETURNS TRIGGER AS $$
+-- BEGIN
+--     NEW.updated_at = NOW();
+--     RETURN NEW;
+-- END;
+-- $$ language 'plpgsql';
 
-CREATE TRIGGER update_resource_updated_at BEFORE UPDATE ON resource
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- CREATE TRIGGER update_resource_updated_at BEFORE UPDATE ON resource
+--     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+--     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Indexe für bessere Performance
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(session_token);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_expires ON user_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_role_resource ON role_permissions(role_id, resource_type);

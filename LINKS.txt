@@ -8,11 +8,13 @@ Technologie-Stack:
 
 
 Verfügbare Features:
-📋 Personen anzeigen - GET /person
-➕ Neue Person erstellen - POST /person
-🔍 Einzelne Person abrufen - GET /person/{id}
+🔐 Authentifizierung & Rollen-Management
+📋 Personen anzeigen - GET /person (mit Berechtigungen)
+➕ Neue Person erstellen - POST /person (mit Berechtigungen)
+🔍 Einzelne Person abrufen - GET /person/{id} (mit Berechtigungen)
 👋 Einfache Begrüßung - GET /hello
 📖 Interaktive API-Dokumentation - Swagger UI
+⚙️ Admin-API für Rollen- und Berechtigungsverwaltung
 
 
 Tools:
@@ -25,10 +27,20 @@ https://radiant-maamoul-fab9c6.netlify.app/
 Lokal:
 ✅ Frontend: http://localhost:8888/
 ✅ Swagger: http://localhost:8888/swagger.html
-✅ API: http://localhost:8888/.netlify/functions/person
+✅ Person API: http://localhost:8888/.netlify/functions/person
+✅ Auth API: http://localhost:8888/.netlify/functions/auth
+✅ Admin API: http://localhost:8888/.netlify/functions/admin
 
 
 Production (Netlify):
 ✅ Frontend: https://radiant-maamoul-fab9c6.netlify.app/
 ✅ Swagger: https://radiant-maamoul-fab9c6.netlify.app/swagger.html
-✅ API: https://radiant-maamoul-fab9c6.netlify.app/.netlify/functions/person
+✅ Person API: https://radiant-maamoul-fab9c6.netlify.app/.netlify/functions/person
+✅ Auth API: https://radiant-maamoul-fab9c6.netlify.app/.netlify/functions/auth
+✅ Admin API: https://radiant-maamoul-fab9c6.netlify.app/.netlify/functions/admin
+
+
+Commands:
+
+Migration:
+- migration-remove-email-from-users.sql - Entfernt doppelte E-Mail-Spalte aus users Tabelle

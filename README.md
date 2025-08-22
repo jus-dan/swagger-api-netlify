@@ -1,280 +1,215 @@
-# 🏭 Makerspace Verwaltung
+# 🏭 Makerspace Verwaltung - Vollständiges System mit Login und Rollen
 
-Eine vollständige Makerspace-Verwaltungsanwendung mit API-First-Ansatz, die das Anlegen, Bearbeiten und Löschen von Personen und Ressourcen (Maschinen, Räume, Werkzeuge) ermöglicht.
+Ein vollständiges Verwaltungssystem für Makerspaces mit Benutzer-Authentifizierung, rollenbasierten Berechtigungen und umfassendem Admin-Interface.
 
-## ✨ Features
+## 🚀 Features
 
-### 📊 Dashboard (Startseite)
-- **Statistik-Übersicht**: Personen, Ressourcen, Kategorien und Rollen auf einen Blick
-- **Letzte Einträge**: Die neuesten Personen, Ressourcen und Kategorien
-- **Schnelle Aktionen**: Bearbeiten und Löschen direkt vom Dashboard
-- **Status-Tracking**: Verfügbarkeit von Ressourcen in Echtzeit
-- **Responsive Design**: Optimiert für Desktop und Mobile
+### 🔐 Authentifizierung & Sicherheit
+- **Benutzer-Login/Logout** mit JWT-Token
+- **Registrierung** neuer Benutzer
+- **Session-Management** mit Datenbank-Überprüfung
+- **Passwort-Hashing** mit bcrypt
 
-### 👥 Personenverwaltung
-- **Anlegen** neuer Personen mit Name, E-Mail und Rollen
-- **Bearbeiten** bestehender Personen
-- **Löschen** von Personen
-- **Anzeigen** aller Personen mit Details
-- **Rollen-Management**: Benutzer, Mitarbeiter, Coaches, Administratoren
+### 🎭 Rollen-basiertes Berechtigungssystem
+- **4 Standard-Rollen**: Admin, Manager, User, Guest
+- **Granulare Berechtigungen** pro Ressourcentyp:
+  - `can_view` - Anzeigen erlaubt
+  - `can_edit` - Bearbeiten erlaubt
+  - `can_delete` - Löschen erlaubt
+  - `can_create` - Erstellen erlaubt
+- **Admin-Interface** für Rollen- und Berechtigungsverwaltung
+- **Dynamische Sichtbarkeiten** basierend auf Benutzerrollen
 
-### 🛠️ Ressourcenverwaltung
-- **Kategorien**: Maschinen, Räume, Werkzeuge, Materialien, Computer
-- **Status-Tracking**: Verfügbar, Wartung, Außer Betrieb
-- **Spezifikationen**: Flexible JSON-Speicherung für technische Details
-- **Standort-Management**: Tracking von Ressourcen-Standorten
-- **Bild-Unterstützung**: URLs für Ressourcen-Bilder
+### 📊 Verwaltungsfunktionen
+- **Personenverwaltung** mit Rollen
+- **Ressourcenverwaltung** (Maschinen, Räume, Werkzeuge)
+- **Kategorienverwaltung** für Ressourcen
+- **Dashboard** mit Übersichten und Statistiken
 
-### 📂 Kategorienverwaltung
-- **Erstellen** neuer Kategorien mit Icons und Farben
-- **Bearbeiten** bestehender Kategorien
-- **Organisation** von Ressourcen nach Kategorien
-- **Visuelle Darstellung** mit Farbkodierung
+## 🏗️ Technologie-Stack
 
-### 🎭 Rollenverwaltung
-- **Definieren** von Benutzerrollen (User, Staff, Coach, Admin, etc.)
-- **Berechtigungen** für verschiedene Funktionen
-- **Flexible Rollenstruktur** für verschiedene Makerspace-Typen
-
-### 📚 API-First Design
-- **RESTful APIs** für alle CRUD-Operationen
-- **Swagger/OpenAPI** Dokumentation
-- **CORS-Unterstützung** für Cross-Origin Requests
-- **Validierung** und Fehlerbehandlung
-
-### 🎨 Modernes Frontend
-- **React + Vite** für schnelle Entwicklung
-- **Responsive Design** für Desktop und Mobile
-- **Moderne UI** mit Modals, Cards und Animationen
-- **Intuitive Navigation** zwischen Dashboard und allen Bereichen
-- **Such- und Filterfunktionen** für alle Daten
-
-## 🚀 Technologie-Stack
-
-- **Frontend**: React 18, Vite, CSS3
-- **Backend**: Node.js, Express, Netlify Functions
+- **Frontend**: React + Vite
+- **Backend**: Node.js + Express + Netlify Functions
 - **Datenbank**: Supabase (PostgreSQL)
+- **Authentifizierung**: JWT + bcrypt
 - **API-Dokumentation**: Swagger/OpenAPI
 - **Deployment**: Netlify
-- **Styling**: Custom CSS mit modernen Design-Patterns
 
-## 📋 Voraussetzungen
+## 🗄️ Datenbankstruktur
 
-- Node.js 18+
-- npm oder yarn
-- Supabase-Account
-- Netlify-Account (für Deployment)
+### Tabellen-Design
+- **`person`**: Zentrale Tabelle für alle Personen-Informationen (Name, E-Mail, Rollen)
+- **`users`**: Authentifizierungsdaten (Username, Passwort-Hash, Verknüpfung zu person)
+- **`roles`**: Rollen-Definitionen (Admin, Manager, User, Guest)
+- **`role_permissions`**: Granulare Berechtigungen pro Rolle und Ressourcentyp
+- **`user_roles`**: Verknüpfung zwischen Benutzern und Rollen
 
-## 🛠️ Installation
+### Datenkonsistenz
+- **E-Mail wird nur in `person` Tabelle gespeichert** (Normalisierung)
+- **`users` Tabelle** verweist über `person_id` auf die `person` Tabelle
+- **Keine doppelten E-Mail-Spalten** → Vermeidung von Dateninkonsistenzen
+
+## 📋 Installation & Setup
 
 ### 1. Repository klonen
 ```bash
-git clone https://github.com/your-username/makerspace-management.git
-cd makerspace-management
+git clone https://github.com/jus-dan/swagger-api-netlify.git
+cd swagger-api-netlify
 ```
 
-### 2. Dependencies installieren
+### 2. Abhängigkeiten installieren
 ```bash
 npm install
-cd frontend && npm install
+cd frontend && npm install && cd ..
 ```
 
 ### 3. Umgebungsvariablen konfigurieren
-```bash
-cp env.example .env
-```
-
-Füllen Sie die `.env` Datei mit Ihren Supabase-Credentials aus:
+Erstelle eine `.env` Datei im Root-Verzeichnis:
 ```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your_supabase_anon_key
+SUPABASE_URL=deine_supabase_url
+SUPABASE_KEY=dein_supabase_service_key
+JWT_SECRET=dein_jwt_secret_key
 ```
 
-### 4. Datenbank-Schema erstellen
-Führen Sie das SQL-Schema in Ihrer Supabase-Datenbank aus:
-```sql
--- Siehe database-schema.sql für das vollständige Schema
-```
-
-## 🏃‍♂️ Entwicklung
-
-### Lokaler Server starten
+### 4. Datenbank-Schema einrichten
+Führe das SQL-Schema in deiner Supabase-Datenbank aus:
 ```bash
-# Im Hauptverzeichnis
+# Kopiere den Inhalt von database-schema.sql
+# und führe ihn in der Supabase SQL Editor aus
+```
+
+### 5. Migration (falls bestehende Datenbank)
+Falls du bereits eine bestehende Datenbank mit doppelten E-Mail-Spalten hast:
+```bash
+# Führe das Migrationsskript aus:
+# migration-remove-email-from-users.sql
+```
+
+### 5. Entwicklungsserver starten
+```bash
 npm run dev
-
-# Oder im Frontend-Verzeichnis
-cd frontend && npm run dev
 ```
 
-### Netlify Functions lokal testen
-```bash
-netlify dev
-```
+## 🔧 Verwendung
 
-Die Anwendung ist dann verfügbar unter:
-- **Frontend**: http://localhost:8888
-- **API-Dokumentation**: http://localhost:8888/swagger.html
+### Erste Schritte
+1. **Registriere einen Admin-Benutzer** über die API:
+   ```bash
+   POST /.netlify/functions/auth/register
+   {
+     "username": "admin",
+     "password": "admin123",
+     "email": "admin@makerspace.com",
+     "name": "Administrator"
+   }
+   ```
 
-## 📡 API-Endpunkte
+2. **Melde dich an** über die Weboberfläche
+3. **Verwalte Rollen und Berechtigungen** im Admin-Bereich
 
-### Personen
-- `GET /api/person` - Alle Personen abrufen
-- `GET /api/person/{id}` - Einzelne Person abrufen
-- `POST /api/person` - Neue Person erstellen
-- `PUT /api/person/{id}` - Person bearbeiten
-- `DELETE /api/person/{id}` - Person löschen
+### Standard-Rollen & Berechtigungen
 
-### Ressourcen
-- `GET /api/resource` - Alle Ressourcen abrufen
-- `GET /api/resource/{id}` - Einzelne Ressource abrufen
-- `POST /api/resource` - Neue Ressource erstellen
-- `PUT /api/resource/{id}` - Ressource bearbeiten
-- `DELETE /api/resource/{id}` - Ressource löschen
+#### 👑 Admin
+- **Vollzugriff** auf alle Funktionen
+- Kann Rollen und Berechtigungen verwalten
+- Kann alle Benutzer verwalten
 
-### Kategorien
-- `GET /api/category` - Alle Kategorien abrufen
-- `GET /api/category/{id}` - Einzelne Kategorie abrufen
-- `POST /api/category` - Neue Kategorie erstellen
-- `PUT /api/category/{id}` - Kategorie bearbeiten
-- `DELETE /api/category/{id}` - Kategorie löschen
+#### 👨‍💼 Manager
+- **Verwaltung** von Ressourcen und Buchungen
+- Kann Personen bearbeiten (nicht löschen)
+- Kann neue Ressourcen erstellen
 
-## 🚀 Deployment
+#### 👤 User
+- **Lese-Zugriff** auf Personen und Ressourcen
+- Kann eigene Buchungen verwalten
+- **Keine** Lösch-Berechtigungen
 
-### Netlify Deployment
-1. Repository mit Netlify verbinden
-2. Build-Einstellungen:
-   - **Build command**: `npm run build`
-   - **Publish directory**: `frontend/dist`
-3. Umgebungsvariablen in Netlify setzen:
-   - `SUPABASE_URL`
-   - `SUPABASE_KEY`
+#### 👥 Guest
+- **Nur Lese-Zugriff** auf alle Daten
+- **Keine** Bearbeitungsrechte
 
-### Produktions-URLs
-- **Frontend**: https://your-app.netlify.app
-- **API-Dokumentation**: https://your-app.netlify.app/swagger.html
+## 📚 API-Endpunkte
 
-## 🗄️ Datenbank-Schema
+### 🔐 Authentifizierung
+- `POST /auth/login` - Benutzer anmelden
+- `POST /auth/logout` - Benutzer abmelden
+- `POST /auth/register` - Neuen Benutzer registrieren
+- `GET /auth/me` - Aktuelle Benutzer-Informationen
+- `GET /auth/roles` - Alle verfügbaren Rollen
+- `GET /auth/permissions` - Berechtigungen für eine Rolle
+- `PUT /auth/permissions` - Berechtigungen aktualisieren
 
-### Tabellen
-- **person**: Personen mit Rollen und Aktivitätsstatus
-- **resource_category**: Kategorien für Ressourcen
-- **resource**: Ressourcen (Maschinen, Räume, etc.)
-- **booking**: Buchungen von Ressourcen (für zukünftige Features)
-- **maintenance_log**: Wartungsprotokoll (für zukünftige Features)
+### ⚙️ Admin-Funktionen
+- `GET /admin/roles` - Alle Rollen mit Berechtigungen
+- `POST /admin/roles` - Neue Rolle erstellen
+- `PUT /admin/roles/:id` - Rolle bearbeiten
+- `DELETE /admin/roles/:id` - Rolle löschen
+- `GET /admin/permissions` - Alle Berechtigungen
+- `PUT /admin/permissions/bulk` - Mehrere Berechtigungen aktualisieren
+- `GET /admin/users` - Alle Benutzer mit Rollen
+- `PUT /admin/users/:id/roles` - Benutzer-Rollen zuweisen
 
-### Standard-Kategorien
-- 🏭 Maschinen (3D-Drucker, CNC, Laser-Cutter)
-- 🏢 Räume (Workshops, Meeting-Räume)
-- 🔧 Werkzeuge (Handwerkzeuge, Elektrowerkzeuge)
-- 📦 Materialien (Holz, Metall, Kunststoff)
-- 💻 Computer (Laptops, Desktop-PCs, Tablets)
+### 👥 Personenverwaltung
+- `GET /person` - Alle Personen abrufen
+- `GET /person/:id` - Einzelne Person abrufen
+- `POST /person` - Neue Person erstellen
+- `PUT /person/:id` - Person bearbeiten
+- `DELETE /person/:id` - Person löschen
 
-### Standard-Rollen
-- 👤 Benutzer (User)
-- 👷 Mitarbeiter (Staff)
-- 🎯 Coach
-- 🔧 Wartung (Maintenance)
-- 👨‍💼 Administrator (Admin)
-- 🏢 CEO
-- 💻 CTO
-- 👨‍🏫 Instruktor (Instructor)
+## 🌐 Deployment
 
-## 🎯 Verwendung
+### Netlify
+Das System ist für Netlify optimiert:
+- **Automatisches Deployment** bei Git-Push
+- **Serverless Functions** für Backend-APIs
+- **CDN** für Frontend-Assets
 
-### Dashboard
-1. **Startseite** zeigt Übersicht aller Daten
-2. **Statistik-Karten** mit aktuellen Zahlen
-3. **Letzte Einträge** für schnellen Überblick
-4. **Schnelle Aktionen** direkt vom Dashboard
+### Produktionsumgebung
+1. **JWT_SECRET** in Netlify-Umgebungsvariablen setzen
+2. **Supabase-Credentials** konfigurieren
+3. **Domain** in Netlify einrichten
 
-### Personen hinzufügen
-1. Tab "Personen" wählen
-2. "Neue Person" klicken
-3. Name, E-Mail und Rollen eingeben
-4. "Erstellen" klicken
+## 🔒 Sicherheitsfeatures
 
-### Ressourcen hinzufügen
-1. Tab "Ressourcen" wählen
-2. "Neue Ressource" klicken
-3. Name, Kategorie und weitere Details eingeben
-4. "Erstellen" klicken
+- **JWT-Token** mit 24h Gültigkeit
+- **Session-Überprüfung** in der Datenbank
+- **Passwort-Hashing** mit bcrypt (12 Runden)
+- **Rollen-basierte Zugriffskontrolle** (RBAC)
+- **CORS-Konfiguration** für sichere API-Aufrufe
+- **Datenkonsistenz** durch Normalisierung (E-Mail nur in person Tabelle)
 
-### Kategorien verwalten
-1. Tab "Kategorien" wählen
-2. "Neue Kategorie" klicken
-3. Name, Beschreibung, Icon und Farbe eingeben
-4. "Erstellen" klicken
+## 📖 Dokumentation
 
-### Bearbeiten/Löschen
-- Klicken Sie auf "Bearbeiten" oder "Löschen" bei den entsprechenden Einträgen
-- Bestätigen Sie Löschvorgänge
-
-## 🔧 Konfiguration
-
-### Umgebungsvariablen
-- `SUPABASE_URL`: Ihre Supabase-Projekt-URL
-- `SUPABASE_KEY`: Ihr Supabase-Anon-Key
-- `NODE_ENV`: Environment (development/production)
-
-### Netlify-Konfiguration
-Die `netlify.toml` Datei enthält:
-- Build-Einstellungen
-- Function-Konfiguration
-- Redirect-Regeln für API-Endpunkte
-
-## 🐛 Troubleshooting
-
-### Häufige Probleme
-
-**"Supabase nicht konfiguriert"**
-- Überprüfen Sie Ihre `.env` Datei
-- Stellen Sie sicher, dass die Umgebungsvariablen korrekt gesetzt sind
-
-**"Port bereits in Verwendung"**
-```bash
-# Port 3999 freigeben
-netstat -ano | findstr :3999
-taskkill /PID <PID> /F
-```
-
-**API-Fehler**
-- Überprüfen Sie die Netlify-Function-Logs
-- Testen Sie die API-Endpunkte direkt über Swagger
-
-**Dashboard lädt nicht**
-- Überprüfen Sie die Browser-Konsole auf Fehler
-- Stellen Sie sicher, dass alle API-Endpunkte funktionieren
-
-## 🔮 Zukünftige Features
-
-- 📅 **Buchungssystem** für Ressourcen
-- 🔔 **Benachrichtigungen** für Wartungen
-- 📈 **Erweiterte Statistiken** und Charts
-- 👤 **Authentifizierung** und Rollen-Management
-- 📱 **Mobile App** (React Native)
-- 🔍 **Erweiterte Suche** und Filter
-- 📊 **Export-Funktionen** (PDF, Excel)
-- 🔄 **Automatische Backups**
-
-## 📄 Lizenz
-
-MIT License - siehe [LICENSE](LICENSE) Datei für Details.
+- **Swagger UI**: `/swagger.html`
+- **Auth API Docs**: `/.netlify/functions/auth/docs`
+- **Admin API Docs**: `/.netlify/functions/admin/docs`
+- **Person API Docs**: `/.netlify/functions/person/docs`
 
 ## 🤝 Beitragen
 
-1. Fork des Repositories
-2. Feature-Branch erstellen (`git checkout -b feature/AmazingFeature`)
-3. Änderungen committen (`git commit -m 'Add some AmazingFeature'`)
-4. Branch pushen (`git push origin feature/AmazingFeature`)
-5. Pull Request erstellen
+1. Fork das Repository
+2. Erstelle einen Feature-Branch
+3. Committe deine Änderungen
+4. Push zum Branch
+5. Erstelle einen Pull Request
 
-## 📞 Support
+## 📄 Lizenz
+
+Dieses Projekt steht unter der MIT-Lizenz.
+
+## 🔗 Links
+
+- **Live Demo**: https://radiant-maamoul-fab9c6.netlify.app/
+- **GitHub**: https://github.com/jus-dan/swagger-api-netlify
+- **Netlify**: https://app.netlify.com/projects/radiant-maamoul-fab9c6/overview
+- **Supabase**: https://supabase.com/dashboard/project/kuwssdhydtjrkmvqajzc
+
+## 🆘 Support
 
 Bei Fragen oder Problemen:
-- 📧 E-Mail: ...
-- 🐛 Issues: GitHub Issues
-- 📚 Dokumentation: Swagger UI unter `/swagger.html`
+1. Überprüfe die API-Dokumentation
+2. Schaue in die Issues auf GitHub
+3. Erstelle ein neues Issue mit detaillierter Beschreibung
 
 ---
 
