@@ -34,22 +34,55 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
     }
   };
 
+  // Auto-generate slug when component mounts or organizationName changes
+  React.useEffect(() => {
+    if (formData.organizationName && !formData.organizationSlug) {
+      const slug = formData.organizationName
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+      setFormData(prev => ({
+        ...prev,
+        organizationSlug: slug
+      }));
+    }
+  }, [formData.organizationName]);
+
   const validateForm = () => {
-    if (!formData.organizationName || !formData.organizationSlug || 
-        !formData.adminEmail || !formData.adminName) {
-      setError('Alle Pflichtfelder sind erforderlich');
+    // Überprüfe alle Pflichtfelder einzeln
+    if (!formData.organizationName) {
+      setError('Bitte gib den Namen des Makerspaces ein');
+      return false;
+    }
+    
+    if (!formData.organizationSlug) {
+      setError('Der URL-Slug wird automatisch generiert. Bitte gib zuerst den Namen ein.');
+      return false;
+    }
+    
+    if (!formData.adminName) {
+      setError('Bitte gib den Namen des Admins ein');
+      return false;
+    }
+    
+    if (!formData.adminEmail) {
+      setError('Bitte gib die E-Mail-Adresse des Admins ein');
       return false;
     }
 
+    // E-Mail-Validierung
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.adminEmail)) {
-      setError('Ungültige E-Mail-Adresse');
+      setError('Bitte gib eine gültige E-Mail-Adresse ein');
       return false;
     }
 
+    // Slug-Validierung
     const slugRegex = /^[a-z0-9-]+$/;
     if (!slugRegex.test(formData.organizationSlug)) {
-      setError('Slug darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten');
+      setError('Der generierte Slug enthält ungültige Zeichen. Bitte überprüfe den Namen.');
       return false;
     }
 
@@ -176,10 +209,11 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
               name="organizationSlug"
               value={formData.organizationSlug}
               onChange={handleInputChange}
-              placeholder="z.B. fablab-muenchen, makerspace-berlin"
+              placeholder="Wird automatisch generiert"
               required
+              readOnly
             />
-            <small>Wird für URLs verwendet. Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.</small>
+            <small>Wird automatisch aus dem Namen generiert. Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.</small>
           </div>
 
 
