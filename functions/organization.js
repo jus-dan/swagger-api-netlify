@@ -92,13 +92,29 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    // Parse Buffer to JSON if needed
+    let body = req.body;
+    if (Buffer.isBuffer(body)) {
+      console.log('🔧 Buffer erkannt, parse zu JSON...');
+      try {
+        body = JSON.parse(body.toString());
+        console.log('✅ Buffer erfolgreich geparst:', body);
+      } catch (parseError) {
+        console.error('❌ Fehler beim Parsen des Buffers:', parseError);
+        return res.status(400).json({ 
+          error: 'Ungültiger JSON-Request',
+          details: parseError.message
+        });
+      }
+    }
+
     const { 
       organizationName, 
       organizationSlug, 
       adminEmail, 
       adminName, 
       adminPassword 
-    } = req.body;
+    } = body;
 
     console.log('🔍 Validierung der Eingabedaten:', {
       organizationName: !!organizationName,
