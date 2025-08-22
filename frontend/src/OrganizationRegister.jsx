@@ -17,6 +17,7 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
     
     // Auto-generate slug from organization name
     if (name === 'organizationName') {
+      console.log('🔄 Name geändert, generiere Slug...');
       const slug = value
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
@@ -24,6 +25,7 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
         .replace(/-+/g, '-')
         .trim();
       
+      console.log('✅ Neuer Slug generiert:', slug);
       setFormData(prev => ({
         ...prev,
         [name]: value,
@@ -40,12 +42,14 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
   // Auto-generate slug when component mounts or organizationName changes
   React.useEffect(() => {
     if (formData.organizationName) {
+      console.log('🔄 useEffect: Generiere Slug für:', formData.organizationName);
       const slug = formData.organizationName
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
         .trim();
+      console.log('✅ useEffect: Slug generiert:', slug);
       setFormData(prev => ({
         ...prev,
         organizationSlug: slug
@@ -54,7 +58,7 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
   }, [formData.organizationName]);
 
   const validateForm = () => {
-    console.log('Validating form data:', formData); // Debug-Log
+    console.log('🔍 Validating form data:', formData); // Debug-Log
     
     // Überprüfe alle Pflichtfelder einzeln
     if (!formData.organizationName || formData.organizationName.trim() === '') {
@@ -81,6 +85,7 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
 
     // Slug wird automatisch generiert, muss nicht validiert werden
     if (!formData.organizationSlug || formData.organizationSlug.trim() === '') {
+      console.log('🔄 Slug fehlt, generiere automatisch...');
       // Slug automatisch generieren falls noch nicht vorhanden
       const slug = formData.organizationName
         .toLowerCase()
@@ -88,12 +93,14 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
         .trim();
+      console.log('✅ Generierter Slug:', slug);
       setFormData(prev => ({
         ...prev,
         organizationSlug: slug
       }));
     }
 
+    console.log('✅ Alle Validierungen bestanden');
     return true;
   };
 
@@ -101,10 +108,15 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
     e.preventDefault();
     setError(null);
 
+    console.log('🚀 Formular wird abgesendet...');
+    console.log('📋 Aktuelle Formulardaten:', formData);
+
     if (!validateForm()) {
+      console.log('❌ Validierung fehlgeschlagen');
       return;
     }
 
+    console.log('✅ Validierung erfolgreich, sende Daten...');
     setIsSubmitting(true);
 
     try {
