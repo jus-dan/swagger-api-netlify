@@ -1165,3 +1165,51 @@ footer a:hover {
   color: #856404;
   text-decoration: underline;
 }
+
+.email-success {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  color: #155724;
+}
+
+.email-success h4 {
+  color: #155724;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.email-success p {
+  color: #155724;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.email-success small {
+  color: #155724;
+  opacity: 0.7;
+  font-size: 0.8rem;
+}
+
+.email-fallback {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  color: #721c24;
+}
+
+.email-fallback h4 {
+  color: #721c24;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.email-fallback p {
+  color: #721c24;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem 0;
+}

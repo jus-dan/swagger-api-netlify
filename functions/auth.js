@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendPasswordResetEmail } = require('./sendgrid-service');
 require('dotenv').config();
 
 const swaggerUi = require('swagger-ui-express');
@@ -650,18 +651,35 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(500).json({ error: 'Fehler beim Verarbeiten der Anfrage' });
     }
 
-    // TODO: E-Mail mit Reset-Link senden
-    // Für den Moment geben wir den Token zurück (nur für Entwicklung)
+    // E-Mail mit Reset-Link senden
     const resetUrl = `${req.headers.origin}/reset-password?token=${resetToken}`;
     
     console.log('🔐 Passwort-Reset angefordert für:', email);
     console.log('🔗 Reset-URL:', resetUrl);
 
-    res.status(200).json({
-      message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
-      // TODO: Entferne das in Produktion
-      resetUrl: process.env.NODE_ENV === 'development' ? resetUrl : undefined
-    });
+    // E-Mail senden
+    const emailResult = await sendPasswordResetEmail(email, resetUrl, person.name);
+    
+    if (emailResult.success) {
+      console.log('✅ E-Mail erfolgreich gesendet:', emailResult.messageId);
+      
+      res.status(200).json({
+        message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
+        emailSent: true,
+        messageId: emailResult.messageId
+      });
+    } else {
+      console.error('❌ E-Mail konnte nicht gesendet werden:', emailResult.error);
+      
+      // Fallback: Token zurückgeben (nur für Entwicklung)
+      res.status(200).json({
+        message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
+        emailSent: false,
+        emailError: emailResult.error,
+        // Nur im Entwicklungsmodus den Link anzeigen
+        resetUrl: process.env.NODE_ENV === 'development' ? resetUrl : undefined
+      });
+    }
 
   } catch (error) {
     console.error('❌ Fehler bei Passwort vergessen:', error);

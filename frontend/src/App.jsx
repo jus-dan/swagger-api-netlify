@@ -51,10 +51,24 @@ const ForgotPassword = ({ onBack, onSuccess }) => {
           <h3>📧 E-Mail gesendet!</h3>
           <p>{success.message}</p>
           
-          {success.resetUrl && (
-            <div className="dev-info">
-              <h4>🔧 Entwicklungsmodus:</h4>
-              <p>Reset-Link: <a href={success.resetUrl} target="_blank" rel="noopener noreferrer">{success.resetUrl}</a></p>
+          {success.emailSent ? (
+            <div className="email-success">
+              <h4>✅ E-Mail erfolgreich versendet!</h4>
+              <p>Bitte überprüfe dein E-Mail-Postfach und klicke auf den Reset-Link.</p>
+              {success.messageId && (
+                <p><small>E-Mail-ID: {success.messageId}</small></p>
+              )}
+            </div>
+          ) : (
+            <div className="email-fallback">
+              <h4>⚠️ E-Mail konnte nicht gesendet werden</h4>
+              <p>Fehler: {success.emailError}</p>
+              {success.resetUrl && (
+                <div className="dev-info">
+                  <h4>🔧 Entwicklungsmodus - Reset-Link:</h4>
+                  <p><a href={success.resetUrl} target="_blank" rel="noopener noreferrer">{success.resetUrl}</a></p>
+                </div>
+              )}
             </div>
           )}
 
