@@ -1213,3 +1213,95 @@ footer a:hover {
   font-size: 0.9rem;
   margin: 0 0 0.5rem 0;
 }
+
+.dev-mode {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 6px;
+  color: #0d47a1;
+}
+
+.dev-mode h4 {
+  color: #0d47a1;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.dev-mode p {
+  color: #0d47a1;
+  font-size: 0.9rem;
+  margin: 0 0 1rem 0;
+}
+
+.reset-link-box {
+  background: white;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.reset-link-box h5 {
+  color: #0d47a1;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.link-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.reset-link {
+  color: #2196f3;
+  text-decoration: none;
+  font-family: monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+  flex: 1;
+}
+
+.reset-link:hover {
+  text-decoration: underline;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.copy-button:hover {
+  background-color: #e9ecef;
+}
+
+.email-error {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  color: #721c24;
+}
+
+.email-error h4 {
+  color: #721c24;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.email-error p {
+  color: #721c24;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem 0;
+}

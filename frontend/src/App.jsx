@@ -58,15 +58,40 @@ const ForgotPassword = ({ onBack, onSuccess }) => {
               {success.messageId && (
                 <p><small>E-Mail-ID: {success.messageId}</small></p>
               )}
+              <p><small>Modus: {success.mode}</small></p>
             </div>
           ) : (
             <div className="email-fallback">
-              <h4>⚠️ E-Mail konnte nicht gesendet werden</h4>
-              <p>Fehler: {success.emailError}</p>
-              {success.resetUrl && (
-                <div className="dev-info">
-                  <h4>🔧 Entwicklungsmodus - Reset-Link:</h4>
-                  <p><a href={success.resetUrl} target="_blank" rel="noopener noreferrer">{success.resetUrl}</a></p>
+              {success.mode === 'development' ? (
+                <div className="dev-mode">
+                  <h4>🔧 Entwicklungsmodus aktiviert</h4>
+                  <p>{success.note}</p>
+                  <div className="reset-link-box">
+                    <h5>🔗 Reset-Link zum Testen:</h5>
+                    <div className="link-container">
+                      <a href={success.resetUrl} target="_blank" rel="noopener noreferrer" className="reset-link">
+                        {success.resetUrl}
+                      </a>
+                      <button 
+                        onClick={() => navigator.clipboard.writeText(success.resetUrl)}
+                        className="copy-button"
+                        title="Link kopieren"
+                      >
+                        📋
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="email-error">
+                  <h4>⚠️ E-Mail konnte nicht gesendet werden</h4>
+                  <p>Fehler: {success.emailError}</p>
+                  {success.resetUrl && (
+                    <div className="dev-info">
+                      <h4>🔧 Fallback - Reset-Link:</h4>
+                      <p><a href={success.resetUrl} target="_blank" rel="noopener noreferrer">{success.resetUrl}</a></p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

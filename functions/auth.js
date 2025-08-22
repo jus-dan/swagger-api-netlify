@@ -657,27 +657,44 @@ router.post('/forgot-password', async (req, res) => {
     console.log('🔐 Passwort-Reset angefordert für:', email);
     console.log('🔗 Reset-URL:', resetUrl);
 
-    // E-Mail senden
-    const emailResult = await sendPasswordResetEmail(email, resetUrl, person.name);
-    
-    if (emailResult.success) {
-      console.log('✅ E-Mail erfolgreich gesendet:', emailResult.messageId);
+    // Prüfe ob SendGrid konfiguriert ist
+    if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL) {
+      console.log('📧 SendGrid konfiguriert - sende E-Mail');
       
-      res.status(200).json({
-        message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
-        emailSent: true,
-        messageId: emailResult.messageId
-      });
+      // E-Mail senden
+      const emailResult = await sendPasswordResetEmail(email, resetUrl, person.name);
+      
+      if (emailResult.success) {
+        console.log('✅ E-Mail erfolgreich gesendet:', emailResult.messageId);
+        
+        res.status(200).json({
+          message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
+          emailSent: true,
+          messageId: emailResult.messageId,
+          mode: 'production'
+        });
+      } else {
+        console.error('❌ E-Mail konnte nicht gesendet werden:', emailResult.error);
+        
+        // Fallback bei E-Mail-Fehler
+        res.status(200).json({
+          message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
+          emailSent: false,
+          emailError: emailResult.error,
+          mode: 'production_fallback',
+          resetUrl: resetUrl // Link anzeigen für manuelles Testen
+        });
+      }
     } else {
-      console.error('❌ E-Mail konnte nicht gesendet werden:', emailResult.error);
+      console.log('🔧 SendGrid nicht konfiguriert - Entwicklungsmodus');
       
-      // Fallback: Token zurückgeben (nur für Entwicklung)
+      // Entwicklungsmodus: Link direkt anzeigen
       res.status(200).json({
-        message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Reset-Link gesendet.',
+        message: 'Passwort-Reset angefordert (Entwicklungsmodus)',
         emailSent: false,
-        emailError: emailResult.error,
-        // Nur im Entwicklungsmodus den Link anzeigen
-        resetUrl: process.env.NODE_ENV === 'development' ? resetUrl : undefined
+        mode: 'development',
+        resetUrl: resetUrl,
+        note: 'SendGrid ist nicht konfiguriert. Verwende den Link zum Testen.'
       });
     }
 
