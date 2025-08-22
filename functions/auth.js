@@ -618,11 +618,15 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     // Prüfe ob Benutzer existiert
+    console.log('🔍 Suche nach Person mit E-Mail:', email);
+    
     const { data: person, error: personError } = await supabase
       .from('person')
       .select('id, email, name')
-      .eq('email', email)
+      .eq('email', email.toLowerCase())
       .single();
+
+    console.log('🔍 Person-Suche Ergebnis:', { person, personError });
 
     if (personError || !person) {
       // Aus Sicherheitsgründen geben wir keine Information darüber, ob die E-Mail existiert
@@ -638,7 +642,8 @@ router.post('/forgot-password', async (req, res) => {
           hasSendGridKey: !!process.env.SENDGRID_API_KEY,
           hasFromEmail: !!process.env.SENDGRID_FROM_EMAIL,
           nodeEnv: process.env.NODE_ENV,
-          userFound: false
+          userFound: false,
+          searchedEmail: email.toLowerCase()
         }
       };
       

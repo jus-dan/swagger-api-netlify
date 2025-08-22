@@ -337,6 +337,231 @@ const ResetPassword = ({ token, onSuccess, onError }) => {
   );
 };
 
+// Benutzer-Registrierung Komponente
+const UserRegister = ({ onBack, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    name: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const validateForm = () => {
+    if (!formData.username || !formData.email || !formData.name || !formData.password) {
+      setError('Alle Felder sind erforderlich');
+      return false;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwörter stimmen nicht überein');
+      return false;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Passwort muss mindestens 6 Zeichen lang sein');
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Ungültige E-Mail-Adresse');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const apiUrl = import.meta.env.DEV 
+        ? 'http://localhost:8888/.netlify/functions/auth/register'
+        : '/.netlify/functions/auth/register';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          name: formData.name,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(data);
+        if (onSuccess) {
+          onSuccess(data);
+        }
+      } else {
+        setError(data.error || 'Fehler bei der Registrierung');
+      }
+    } catch (err) {
+      setError('Netzwerkfehler: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="user-register">
+        <div className="success-message">
+          <h3>🎉 Registrierung erfolgreich!</h3>
+          <p>{success.message}</p>
+          
+          <div className="user-info">
+            <h4>Dein Konto:</h4>
+            <p><strong>Benutzername:</strong> {success.user?.username}</p>
+            <p><strong>E-Mail:</strong> {success.user?.email}</p>
+            <p><strong>Name:</strong> {success.user?.person?.name}</p>
+          </div>
+
+          <div style={{ marginTop: '20px' }}>
+            <button 
+              className="submit-button" 
+              onClick={() => onBack()}
+            >
+              Zum Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="user-register">
+      <div className="register-header">
+        <button className="back-button" onClick={onBack}>
+          ← Zurück
+        </button>
+        <h1>👤 Benutzer registrieren</h1>
+        <p>Erstelle dein persönliches Konto</p>
+      </div>
+
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="username">Benutzername *</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            value={formData.username}
+            onChange={handleInputChange}
+            placeholder="Dein Benutzername"
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="email">E-Mail-Adresse *</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            placeholder="deine@email.de"
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="name">Vollständiger Name *</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            placeholder="Vor- und Nachname"
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="password">Passwort *</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            placeholder="Mindestens 6 Zeichen"
+            required
+            minLength="6"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="confirmPassword">Passwort bestätigen *</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleInputChange}
+            placeholder="Passwort wiederholen"
+            required
+            minLength="6"
+          />
+        </div>
+
+        <div className="form-actions">
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Registriere...' : 'Registrieren'}
+          </button>
+        </div>
+      </form>
+
+      <div className="register-info">
+        <h3>ℹ️ Nach der Registrierung</h3>
+        <ul>
+          <li>Du kannst dich sofort mit deinen Daten anmelden</li>
+          <li>Dein Konto hat die Standard-Rolle "Benutzer"</li>
+          <li>Du kannst später weitere Rollen erhalten</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
 function App() {
   // Build-Informationen (wird bei jedem Build aktualisiert)
   const getBuildInfoString = () => {
@@ -355,6 +580,7 @@ function App() {
   const [showOrganizationRegister, setShowOrganizationRegister] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [showResetPassword, setShowResetPassword] = useState(false)
+  const [showUserRegister, setShowUserRegister] = useState(false)
   const [resetToken, setResetToken] = useState(null)
 
   // Form states
@@ -850,6 +1076,20 @@ function App() {
       );
     }
 
+    if (showUserRegister) {
+      return (
+        <div className="app">
+          <UserRegister 
+            onBack={() => setShowUserRegister(false)}
+            onSuccess={(data) => {
+              console.log('Benutzer erfolgreich registriert:', data);
+              setShowUserRegister(false);
+            }}
+          />
+        </div>
+      );
+    }
+
     if (showForgotPassword) {
       return (
         <div className="app">
@@ -897,25 +1137,46 @@ function App() {
               Passwort vergessen?
             </button>
             
+            <div style={{ marginBottom: '20px' }}>
+              <button 
+                onClick={() => setShowUserRegister(true)}
+                className="btn-secondary"
+                style={{ 
+                  background: 'linear-gradient(135deg, #3498db, #2980b9)',
+                  border: 'none',
+                  color: 'white',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.9em',
+                  fontWeight: '600',
+                  marginRight: '10px'
+                }}
+              >
+                👤 Benutzer registrieren
+              </button>
+              
+              <button 
+                onClick={() => setShowOrganizationRegister(true)}
+                className="btn-secondary"
+                style={{ 
+                  background: 'linear-gradient(135deg, #27ae60, #2ecc71)',
+                  border: 'none',
+                  color: 'white',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.9em',
+                  fontWeight: '600'
+                }}
+              >
+                ⏰ Neuen BenchTime-Workspace registrieren
+              </button>
+            </div>
+            
             <p style={{ color: '#7f8c8d', marginBottom: '15px' }}>
-              Noch keinen Makerspace? Erstelle deine eigene Instanz!
+              Wähle aus, was du registrieren möchtest
             </p>
-            <button 
-              onClick={() => setShowOrganizationRegister(true)}
-              className="btn-secondary"
-              style={{ 
-                background: 'linear-gradient(135deg, #27ae60, #2ecc71)',
-                border: 'none',
-                color: 'white',
-                padding: '12px 24px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '1em',
-                fontWeight: '600'
-              }}
-            >
-              ⏰ Neuen BenchTime-Workspace registrieren
-            </button>
           </div>
           
           {/* Footer auch beim Login anzeigen */}
