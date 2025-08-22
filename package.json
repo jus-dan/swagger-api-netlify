@@ -4,8 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "prebuild": "node update-build-info.js",
     "build": "cd frontend && npm install && npm run build",
-    "dev": "cd frontend && npm run dev"
+    "dev": "cd frontend && npm run dev",
+    "update-build": "node update-build-info.js"
   },
   "keywords": [],
   "author": "",

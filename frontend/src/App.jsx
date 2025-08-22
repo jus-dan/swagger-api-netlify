@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import OrganizationRegister from './OrganizationRegister'
-import { getBuildInfoString, getDetailedBuildInfo } from '../build-info.js'
 
 function App() {
+  // Build-Informationen (wird bei jedem Build aktualisiert)
+  const getBuildInfoString = () => {
+    return `v1.0.0 | Build ${new Date().toISOString().split('T')[0]} | dev`;
+  };
+
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('dashboard')
