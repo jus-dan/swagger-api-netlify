@@ -78,7 +78,12 @@ const OrganizationRegister = ({ onBack, onSuccess }) => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:8888/.netlify/functions/organization/register', {
+      // Dynamische URL für lokale Entwicklung und Produktion
+      const apiUrl = import.meta.env.DEV 
+        ? 'http://localhost:8888/.netlify/functions/organization/register'
+        : '/.netlify/functions/organization/register';
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
